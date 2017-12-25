@@ -1,6 +1,7 @@
 setup:
 	pip install --user -r requirements.txt
-	export FLASK_APP=foxlock.py
+	openssl req -x509 -newkey rsa:4096 -nodes -out resources/cert.pem -keyout resources/key.pem
+
 
 run:
 	flask run
