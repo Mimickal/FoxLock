@@ -7,11 +7,11 @@ app = Flask('foxlock');
 def keyRoute():
 	'''This is a proof of concept, so we're going to violate boundaries for a little while.'''
 	encodedToken = request.args.get('token')
-	userPublicKey = open('tempdevstuff/testkey.pub', 'r').read()
+	userPublicKey = open('keys/testuser/key_public.rsa', 'r').read()
 
 	data = jwt.decode(encodedToken, userPublicKey, algorithm='RS256')
 
-	requestedkey = open('resources/userkey.txt', 'r').read()
+	requestedkey = open('keys/testuser/testkey.key', 'r').read()
 	return requestedkey
 
 
