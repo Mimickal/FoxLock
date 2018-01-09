@@ -44,6 +44,11 @@ def keyRoute(client):
 
 	return keytoken.decode('utf-8')
 
+@app.route('/jwtkey', methods=['GET'])
+def jwtKeyRoute():
+	server_jwt_rsa_public_key = open('resources/jwt_key.pub', 'r').read()
+	return server_jwt_rsa_public_key
+
 
 if __name__ == '__main__':
     context = ('resources/ssl_cert.pem', 'resources/ssl_privatekey.pem')
