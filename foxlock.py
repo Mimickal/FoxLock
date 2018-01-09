@@ -11,6 +11,8 @@ def keyRoute(client):
 		abort(400)
 
 	encodedToken = request.args.get('token')
+	if encodedToken is None:
+		abort(400)
 
 	# A client exists in our system if there is a matching key directory
 	try:
