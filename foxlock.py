@@ -18,16 +18,15 @@ def keyRoute(client):
 	try:
 		userPublicKey = open('keys/' + client + '/key_public.rsa', 'r').read()
 	except IOError:
-		abort(404)
+		abort(404) # Client public key not found
 
-	# JWT decoding can fail for any number of reasons, but most of our failures
-	# will come from users signing tokens with the wrong key.
+	# Most JWT errors will come from users signing tokens with the wrong key
 	try:
 		data = jwt.decode(encodedToken, userPublicKey, algorithm='RS256')
 	except jwt.exceptions.DecodeError:
-		abort(400) # TODO give additional information
+		abort(400) # Client's key might not be right, or they're not utf-8 decoding their JWT string
 	except jwt.exceptions.InvalidTokenError:
-		abort(400)
+		abort(400) # JWT is malformed
 
 	# Keys may only have alpha-numeric names
 	try:
@@ -45,3 +44,4 @@ def keyRoute(client):
 if __name__ == '__main__':
     context = ('resources/cert.pem', 'resources/key.pem')
     app.run(ssl_context=context)
+
