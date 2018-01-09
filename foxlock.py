@@ -38,7 +38,11 @@ def keyRoute(client):
 	except IOError:
 		abort(404) # Key not found
 
-	return requestedkey
+	# Key is returned in an RSA256 signed JWT so client can be sure it actually came from us
+	jwtprivatekey = open('resources/jwt_key', 'r').read()
+	keytoken = jwt.encode({'key': requestedkey}, jwtprivatekey, algorithm='RS256')
+
+	return keytoken.decode('utf-8')
 
 
 if __name__ == '__main__':
