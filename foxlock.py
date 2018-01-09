@@ -28,7 +28,16 @@ def keyRoute(client):
 		abort(400) # TODO give additional information
 	except jwt.exceptions.InvalidTokenError:
 		abort(400)
-	requestedkey = open('keys/' + client + '/testkey.key', 'r').read()
+
+	# Keys may only have alpha-numeric names
+	try:
+		if re.search('[^a-zA-Z0-9]', data['key']):
+			abort(400) # Invalid key requested
+		requestedkey = open('keys/' + client + '/' + data['key'] + '.key', 'r').read()
+	except KeyError:
+		abort(400) # JWT did not contain key
+	except IOError:
+		abort(404) # Key not found
 
 	return requestedkey
 
