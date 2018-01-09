@@ -17,7 +17,15 @@ def keyRoute(client):
 		userPublicKey = open('keys/' + client + '/key_public.rsa', 'r').read()
 	except IOError:
 		abort(404)
-	data = jwt.decode(encodedToken, userPublicKey, algorithm='RS256')
+
+	# JWT decoding can fail for any number of reasons, but most of our failures
+	# will come from users signing tokens with the wrong key.
+	try:
+		data = jwt.decode(encodedToken, userPublicKey, algorithm='RS256')
+	except jwt.exceptions.DecodeError:
+		abort(400) # TODO give additional information
+	except jwt.exceptions.InvalidTokenError:
+		abort(400)
 	requestedkey = open('keys/' + client + '/testkey.key', 'r').read()
 
 	return requestedkey
