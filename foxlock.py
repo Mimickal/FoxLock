@@ -16,7 +16,7 @@ def keyRoute(client):
 
 	# A client exists in our system if there is a matching key directory
 	try:
-		userPublicKey = open('keys/' + client + '/key_public.rsa', 'r').read()
+		userPublicKey = open('keys/' + client + '/key_rsa.pub', 'r').read()
 	except IOError:
 		abort(404) # Client public key not found
 
@@ -42,6 +42,6 @@ def keyRoute(client):
 
 
 if __name__ == '__main__':
-    context = ('resources/cert.pem', 'resources/key.pem')
+    context = ('resources/ssl_cert.pem', 'resources/ssl_privatekey.pem')
     app.run(ssl_context=context)
 
