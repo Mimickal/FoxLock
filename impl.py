@@ -3,11 +3,7 @@ import jwt
 import re
 
 def getKey(client):
-	validateClientName(client)
-
-	encoded_token = retrieveToken()
-	client_rsa_public_key = loadClientRSAKey(client)
-	client_request = decodeToken(encoded_token, client_rsa_public_key)
+	client_request = decodeRequestToken(client)
 
 	# Keys may only have alpha-numeric names
 	try:
@@ -33,30 +29,28 @@ def getJwtKey():
 # Helper Functions
 ##################
 
-def validateClientName(name):
-	"""Client may only have alpha-numeric names"""
-	if re.search('[^a-zA-Z0-9]', name):
+def decodeRequestToken(client):
+	# Client may only have alpha-numeric names
+	if re.search('[^a-zA-Z0-9]', client):
 		abort(400)
 
-def retrieveToken():
 	token = request.args.get('token')
 	if token is None:
 		abort(400)
-	return token
 
-def loadClientRSAKey(client):
-	"""A client exists in our system if there is a matching key directory"""
+	# A client exists in our system if there is a matching key directory
 	try:
-		return open('keys/' + client + '/key_rsa.pub', 'r').read()
+		client_rsa_public_key = open('keys/' + client + '/key_rsa.pub', 'r').read()
 	except IOError:
 		abort(404) # Client public key not found
 
-def decodeToken(token, public_key):
-	"""Most JWT errors will come from clients signing JWTs with the wrong key"""
+	# Most JWT errors will come from clients signing JWTs with the wrong key
 	try:
-		return jwt.decode(token, public_key, algorithm='RS256')
+		decoded_token = jwt.decode(token, client_rsa_public_key, algorithm='RS256')
 	except jwt.exceptions.DecodeError:
 		abort(400) # Client's key might not be right, or they're not utf-8 decoding their JWT
 	except jwt.exceptions.InvalidTokenError:
 		abort(400) # JWT is malformed
+
+	return decoded_token
 
