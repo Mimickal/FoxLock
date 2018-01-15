@@ -21,6 +21,26 @@ def getKey(client):
 
 	return keytoken.decode('utf-8')
 
+def addKey(client):
+	token_data = decodeRequestToken(client)
+
+	# Client needs to provide a key name and key data
+	try:
+		token_data['name']
+		token_data['key']
+	except KeyError:
+		abort(400) # Token data must include 'key' and 'name'
+
+	# Use 'x' flag so we can throw an error if a key with this name already exists
+	try:
+		with open('keys/' + client + '/' + token_data['name'] + '.key', 'x') as f:
+			f.write(token_data['key'])
+	except FileExistsError:
+		abort(400) # Key with this name already exists
+
+	return 'Key successfully created'
+
+
 def getJwtKey():
 	server_jwt_rsa_public_key = open('resources/jwt_key.pub', 'r').read()
 	return server_jwt_rsa_public_key
@@ -30,10 +50,13 @@ def getJwtKey():
 ##################
 
 def decodeRequestToken(client):
+	"""Validates that the client exists and decodes the token using the client's RSA public key"""
+
 	# Client may only have alpha-numeric names
 	if re.search('[^a-zA-Z0-9]', client):
 		abort(400)
 
+	# Flask keeps track of the current request information in its built-in request object
 	token = request.args.get('token')
 	if token is None:
 		abort(400)
