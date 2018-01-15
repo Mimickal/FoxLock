@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, abort
 
 import impl
 
@@ -12,6 +12,9 @@ def keyRoute(client):
 		return impl.addKey(client)
 	if request.method == 'PUT':
 		return impl.updateKey(client)
+	# Flask should automatically reject a request that doesn't match one of the above methods,
+	# but defensive coding says we should catch this case anyway.
+	abort(400)
 
 @app.route('/jwtkey', methods=['GET'])
 def jwtKeyRoute():
