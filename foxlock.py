@@ -4,12 +4,14 @@ import impl
 
 app = Flask('foxlock');
 
-@app.route('/key/<client>', methods=['GET', 'POST'])
+@app.route('/key/<client>', methods=['GET', 'POST', 'PUT'])
 def keyRoute(client):
 	if request.method == 'GET':
 		return impl.getKey(client)
 	if request.method == 'POST':
 		return impl.addKey(client)
+	if request.method == 'PUT':
+		return impl.updateKey(client)
 
 @app.route('/jwtkey', methods=['GET'])
 def jwtKeyRoute():

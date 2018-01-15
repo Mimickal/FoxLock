@@ -1,6 +1,7 @@
 from flask import request, abort
 import jwt
 import re
+import os
 
 def getKey(client):
 	client_request = decodeRequestToken(client)
@@ -23,13 +24,7 @@ def getKey(client):
 
 def addKey(client):
 	token_data = decodeRequestToken(client)
-
-	# Client needs to provide a key name and key data
-	try:
-		token_data['name']
-		token_data['key']
-	except KeyError:
-		abort(400) # Token data must include 'key' and 'name'
+	validateNewKeyData(token_data)
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
@@ -40,6 +35,18 @@ def addKey(client):
 
 	return 'Key successfully created'
 
+def updateKey(client):
+	token_data = decodeRequestToken(client)
+	validateNewKeyData(token_data)
+
+	# Use 'w' flag to replace existing key file with the new key data
+	if os.path.isfile('keys/' + client + '/' + token_data['name'] + '.key'):
+		with open('keys/' + client + '/' + token_data['name'] + '.key', 'w') as f:
+			f.write(token_data['key'])
+	else:
+		abort(400) # Key with this name doesn't exist
+
+	return 'Key successfully updated'
 
 def getJwtKey():
 	server_jwt_rsa_public_key = open('resources/jwt_key.pub', 'r').read()
@@ -76,4 +83,12 @@ def decodeRequestToken(client):
 		abort(400) # JWT is malformed
 
 	return decoded_token
+
+def validateNewKeyData(data):
+	"""Client needs to provide a key name and key data"""
+	try:
+		data['name']
+		data['key']
+	except KeyError:
+		abort(400) # Token data must include 'key' and 'name'
 
