@@ -6,6 +6,7 @@ app = Flask('foxlock');
 
 @app.route('/key/<client>', methods=['GET', 'POST', 'PUT'])
 def keyRoute(client):
+	"""This endpoint provides basic CRUD operations for client keys"""
 	if request.method == 'GET':
 		return impl.getKey(client)
 	if request.method == 'POST':
@@ -18,6 +19,7 @@ def keyRoute(client):
 
 @app.route('/jwtkey', methods=['GET'])
 def jwtKeyRoute():
+	"""This endpoint returns the public key of the RSA key-pair we use to sign our JWTs."""
 	return impl.getJwtKey()
 
 if __name__ == '__main__':

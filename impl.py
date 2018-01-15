@@ -4,6 +4,9 @@ import re
 import os
 
 def getKey(client):
+	"""Retrieves the specified key for the specified client
+	Returns an error if the key doesn't exist, obviously.
+	"""
 	client_request = decodeRequestToken(client)
 
 	# Keys may only have alpha-numeric names
@@ -23,6 +26,9 @@ def getKey(client):
 	return keytoken.decode('utf-8')
 
 def addKey(client):
+	"""Adds a new key with the specified name and contents.
+	Returns an error if a key with the specified name already exists.
+	"""
 	token_data = decodeRequestToken(client)
 	validateNewKeyData(token_data)
 
@@ -36,6 +42,9 @@ def addKey(client):
 	return 'Key successfully created'
 
 def updateKey(client):
+	"""Updates the contents of a key that already exists in our system.
+	Returns an error if the specified key doesn't exist for the specified user.
+	"""
 	token_data = decodeRequestToken(client)
 	validateNewKeyData(token_data)
 
@@ -49,6 +58,7 @@ def updateKey(client):
 	return 'Key successfully updated'
 
 def getJwtKey():
+	"""Simply returns the RSA public key the server uses to sign JWTs"""
 	server_jwt_rsa_public_key = open('resources/jwt_key.pub', 'r').read()
 	return server_jwt_rsa_public_key
 
@@ -57,8 +67,13 @@ def getJwtKey():
 ##################
 
 def decodeRequestToken(client):
-	"""Validates that the client exists and decodes the token using the client's RSA public key"""
-
+	"""Decodes the request's JWT with the specified client's RSA public key (RS256).
+	Returns an error if:
+		- The specified client doesn't exist
+		- Their RSA public key isn't in our system
+		- The token isn't provided in the request
+		- There's an issue decoding the JWT
+	"""
 	# Client may only have alpha-numeric names
 	if re.search('[^a-zA-Z0-9]', client):
 		abort(400)
@@ -85,7 +100,7 @@ def decodeRequestToken(client):
 	return decoded_token
 
 def validateNewKeyData(data):
-	"""Client needs to provide a key name and key data"""
+	"""Verify that the client provided a key name and key data in their request"""
 	try:
 		data['name']
 		data['key']
