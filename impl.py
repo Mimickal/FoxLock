@@ -3,10 +3,16 @@ import jwt
 import re
 import os
 
+# Cache server keys because they don't change during program operation
+SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'r').read()
+SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'r').read()
+
 def getKey(client):
 	"""Retrieves the specified key for the specified client
 	Returns an error if the key doesn't exist, obviously.
 	"""
+	global SERVER_JWT_PRIVATE_KEY
+
 	client_request = decodeRequestToken(client)
 
 	# Keys may only have alpha-numeric names
@@ -21,7 +27,7 @@ def getKey(client):
 
 	# Key is returned in an RSA256 signed JWT so client can be sure it actually came from us
 	server_jwt_rsa_private_key = open('resources/jwt_key', 'r').read()
-	keytoken = jwt.encode({'key': requested_key}, server_jwt_rsa_private_key, algorithm='RS256')
+	keytoken = jwt.encode({'key': requested_key}, SERVER_JWT_PRIVATE_KEY, algorithm='RS256')
 
 	return keytoken.decode('utf-8')
 
@@ -59,8 +65,8 @@ def updateKey(client):
 
 def getJwtKey():
 	"""Simply returns the RSA public key the server uses to sign JWTs"""
-	server_jwt_rsa_public_key = open('resources/jwt_key.pub', 'r').read()
-	return server_jwt_rsa_public_key
+	global SERVER_JWT_PUBLIC_KEY
+	return SERVER_JWT_PUBLIC_KEY
 
 ##################
 # Helper Functions
