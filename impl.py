@@ -78,6 +78,10 @@ def decodeRequestToken(client):
 	if re.search('[^a-zA-Z0-9]', client):
 		abort(400)
 
+	# Does the client even exist in our system?
+	if not os.path.isdir('keys/' + client):
+		abort(404) # Client doesn't exist
+
 	# Flask keeps track of the current request information in its built-in request object
 	token = request.args.get('token')
 	if token is None:
