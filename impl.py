@@ -19,7 +19,7 @@ def getKey(client):
 	try:
 		if re.search('[^a-zA-Z0-9]', client_request['key']):
 			abort(400) # Invalid key requested
-		requested_key = open('keys/' + client + '/' + client_request['key'] + '.key', 'r').read()
+		requested_key = open('keys/%s/%s.key' % (client, client_request['key']), 'r').read()
 	except KeyError:
 		abort(400) # JWT did not contain key
 	except IOError:
@@ -40,7 +40,7 @@ def addKey(client):
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
-		with open('keys/' + client + '/' + token_data['name'] + '.key', 'x') as f:
+		with open('keys/%s/%s.key' % (client, token_data['name']), 'x') as f:
 			f.write(token_data['key'])
 	except FileExistsError:
 		abort(400) # Key with this name already exists
@@ -55,8 +55,8 @@ def updateKey(client):
 	validateNewKeyData(token_data)
 
 	# Use 'w' flag to replace existing key file with the new key data
-	if os.path.isfile('keys/' + client + '/' + token_data['name'] + '.key'):
-		with open('keys/' + client + '/' + token_data['name'] + '.key', 'w') as f:
+	if os.path.isfile('keys/%s/%s.key' % (client, token_data['name'])):
+		with open('keys/%s/%s.key' % (client, token_data['key']), 'w') as f:
 			f.write(token_data['key'])
 	else:
 		abort(400) # Key with this name doesn't exist
