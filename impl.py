@@ -1,7 +1,9 @@
-from flask import request, abort
+from flask import request
 import jwt
 import re
 import os
+
+from errors import BadRequest, NotFound
 
 # Cache server keys because they don't change during program operation
 SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'rb').read()
@@ -21,12 +23,12 @@ def getKey(client):
 	# Keys may only have alpha-numeric names
 	try:
 		if re.search('[^a-zA-Z0-9]', token_data['key']):
-			abort(400) # Invalid key requested
+			raise BadRequest('Invalid key requested')
 		requested_key = open('keys/%s/%s.key' % (client, token_data['key']), 'r').read()
 	except KeyError:
-		abort(400) # JWT did not contain key
+		raise BadRequest("JWT did not contain attribute 'key'")
 	except IOError:
-		abort(404) # Key not found
+		raise BadRequest("Key '%s' not found" % token_data['key'])
 
 	# Key is returned in a JWT encrypted with the client's public key, so only they can decrypt it
 	keytoken = packJWT({'key': requested_key}, SERVER_JWT_PRIVATE_KEY)
@@ -48,7 +50,7 @@ def addKey(client):
 		with open('keys/%s/%s.key' % (client, token_data['name']), 'x') as f:
 			f.write(token_data['key'])
 	except FileExistsError:
-		abort(400) # Key with this name already exists
+		raise BadRequest("Key '%s' already exists" % token_data['name'])
 
 	return 'Key successfully created'
 
@@ -67,7 +69,7 @@ def updateKey(client):
 		with open('keys/%s/%s.key' % (client, token_data['name']), 'w') as f:
 			f.write(token_data['key'])
 	else:
-		abort(400) # Key with this name doesn't exist
+		raise NotFound("Key '%s' not found" % token_data['name'])
 
 	return 'Key successfully updated'
 
@@ -81,34 +83,31 @@ def getJwtKey():
 ##################
 
 def validateClient(client):
-	# Client may only have alpha-numeric names
 	if re.search('[^a-zA-Z0-9]', client):
-		abort(400)
+		raise BadRequest('Client may only have alpha-numeric names')
 	if not os.path.isdir('keys/' + client):
-		abort(404) # Client doesn't exist
+		raise NotFound("Client '%s' not found" % client)
 
 def loadClientRSAKey(client):
 	"""Load a client's RSA public key, if they exist in our system"""
 	try:
 		key = open('keys/%s/key_rsa.pub' % client, 'rb').read()
 	except IOError:
-		abort(404) # Client public key not found
+		raise NotFound('Client RSA public key not found')
 	return key
 
 def decodeRequestToken(token, client_pub_key):
 	"""Decrypts / decodes the request's JWT with the server's JWT private key."""
-	# Flask keeps track of the current request information in its built-in request object
-	token = request.args.get('token')
 	if token is None:
-		abort(400)
+		raise BadRequest('No token found in request')
 
 	# Most JWT errors will come from clients signing JWTs with the wrong key
 	try:
 		decoded_token_data = unpackJWT(token, client_pub_key)
 	except jwt.exceptions.DecodeError:
-		abort(400) # Client's key might not be right, or they're not utf-8 decoding their JWT
+		raise BadRequest('Failed to decode JWT. Are you using the right key?')
 	except jwt.exceptions.InvalidTokenError:
-		abort(400) # JWT is malformed
+		raise BadRequest('JWT is malformed')
 	return decoded_token_data
 
 def validateNewKeyData(data):
@@ -117,7 +116,7 @@ def validateNewKeyData(data):
 		data['name']
 		data['key']
 	except KeyError:
-		abort(400) # Token data must include 'key' and 'name'
+		raise BadRequest("Token data must include 'key' and 'name'")
 
 
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
