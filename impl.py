@@ -56,7 +56,7 @@ def updateKey(client):
 
 	# Use 'w' flag to replace existing key file with the new key data
 	if os.path.isfile('keys/%s/%s.key' % (client, token_data['name'])):
-		with open('keys/%s/%s.key' % (client, token_data['key']), 'w') as f:
+		with open('keys/%s/%s.key' % (client, token_data['name']), 'w') as f:
 			f.write(token_data['key'])
 	else:
 		abort(400) # Key with this name doesn't exist
