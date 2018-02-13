@@ -4,8 +4,8 @@ import re
 import os
 
 # Cache server keys because they don't change during program operation
-SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'r').read()
-SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'r').read()
+SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'rb').read()
+SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'rb').read()
 
 def getKey(client):
 	"""Retrieves the specified key for the specified client
