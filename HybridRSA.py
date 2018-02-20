@@ -80,7 +80,7 @@ def encrypt(string, rsa_key):
 	'''Use RSA/AES hybrid to encrypt data'''
 	global AES_KEY_SIZE
 
-	aes_key = os.urandom(int(AES_KEY_SIZE / 8))
+	aes_key = os.urandom(AES_KEY_SIZE // 8)
 	enc_string = encryptAES(string, aes_key)
 	enc_key = encryptRSA(aes_key, rsa_key)
 	return enc_key + enc_string
