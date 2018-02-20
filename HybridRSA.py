@@ -2,6 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Hash import SHA256
 from Crypto import Random
+from cryptography.hazmat.primitives.padding import PKCS7
 import os
 import math
 
@@ -26,14 +27,15 @@ AES_KEY_SIZE = 256
 
 def PKCS7pad(string):
 	'''Pad string using PKCS7 scheme to pad data to AES block size.'''
-	num_pad_chars = AES.block_size - len(string) % AES.block_size
-	pad_char = chr(num_pad_chars)
-	return string + pad_char * num_pad_chars
+	padder = PKCS7(AES.block_size * 8).padder()
+	partial_string = padder.update(string)
+	return partial_string + padder.finalize()
 
 def PKCS7unpad(string):
 	'''Unpad PKCS7 padded string'''
-	pad_char = string[len(string) - 1:]
-	return string[:-ord(pad_char)]
+	unpadder = PKCS7(AES.block_size * 8).unpadder()
+	partial_string = unpadder.update(string)
+	return partial_string + unpadder.finalize()
 
 
 # Symmetric (AES CBC) encryption functions.
@@ -43,7 +45,7 @@ def encryptAES(string, key):
 	'''Encrypts data string using AES CBC'''
 	init_vector = Random.new().read(AES.block_size)
 	cipher = AES.new(key, AES.MODE_CBC, init_vector)
-	padded_string = PKCS7pad(string)
+	padded_string = PKCS7pad(string).decode('utf-8')
 	encrypted = cipher.encrypt(padded_string)
 	return init_vector + encrypted
 
@@ -52,7 +54,7 @@ def decryptAES(string, key):
 	init_vector = string[:16]
 	encrypted = string[16:]
 	cipher = AES.new(key, AES.MODE_CBC, init_vector)
-	decrypted_string = cipher.decrypt(encrypted).decode('utf-8')
+	decrypted_string = cipher.decrypt(encrypted)
 	return PKCS7unpad(decrypted_string)
 
 
