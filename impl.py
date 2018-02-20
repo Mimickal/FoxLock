@@ -11,6 +11,7 @@ SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'rb').read()
 SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'rb').read()
 
 # HTTP response codes
+CREATED = 201
 BAD_REQUEST = 400
 NOT_FOUND = 404
 
@@ -48,6 +49,7 @@ def addKey(client):
 	Returns an error if a key with the specified name already exists.
 	"""
 	global BAD_REQUEST
+	global CREATED
 
 	validateClient(client)
 
@@ -62,13 +64,14 @@ def addKey(client):
 	except FileExistsError:
 		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % token_data['name'])
 
-	return 'Key successfully created'
+	return 'Key successfully created', CREATED
 
 def updateKey(client):
 	"""Updates the contents of a key that already exists in our system.
 	Returns an error if the specified key doesn't exist for the specified user.
 	"""
 	global NOT_FOUND
+	global CREATED
 
 	validateClient(client)
 
@@ -83,7 +86,7 @@ def updateKey(client):
 	else:
 		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % token_data['name'])
 
-	return 'Key successfully updated'
+	return 'Key successfully updated', CREATED
 
 def getJwtKey():
 	"""Simply returns the RSA public key the server uses to sign JWTs"""
