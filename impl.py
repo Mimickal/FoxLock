@@ -14,6 +14,8 @@ SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'rb').read()
 BAD_REQUEST = 400
 NOT_FOUND = 404
 
+KEY_SIZE_LIMIT = int(1e4)
+
 def getKey(client):
 	"""Retrieves the specified key for the specified client
 	Returns an error if the key doesn't exist, obviously.
@@ -129,14 +131,18 @@ def decodeRequestToken(token, client_pub_key):
 	return decoded_token_data
 
 def validateNewKeyData(data):
-	"""Verify that the client provided a key name and key data in their request"""
+	"""Verify the request key name and key data are valid"""
 	global BAD_REQUEST
+	global KEY_SIZE_LIMIT
 
 	try:
 		data['name']
 		data['key']
 	except KeyError:
 		raise FoxlockError(BAD_REQUEST, "Token data must include 'key' and 'name'")
+
+	if len(data['key']) > KEY_SIZE_LIMIT:
+		raise FoxlockError(BAD_REQUEST, 'Key size limited to %s bytes' % KEY_SIZE_LIMIT)
 
 
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
