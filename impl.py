@@ -4,18 +4,22 @@ import re
 import os
 from base64 import b64encode, b64decode
 
-from errors import BadRequest, NotFound
 import HybridRSA
 
 # Cache server keys because they don't change during program operation
 SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'rb').read()
 SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'rb').read()
 
+# HTTP response codes
+BAD_REQUEST = 400
+NOT_FOUND = 404
+
 def getKey(client):
 	"""Retrieves the specified key for the specified client
 	Returns an error if the key doesn't exist, obviously.
 	"""
 	global SERVER_JWT_PRIVATE_KEY
+	global BAD_REQUEST
 
 	validateClient(client)
 
@@ -25,12 +29,12 @@ def getKey(client):
 	# Keys may only have alpha-numeric names
 	try:
 		if re.search('[^a-zA-Z0-9]', token_data['key']):
-			raise BadRequest('Invalid key requested')
+			raise FoxlockError(BAD_REQUEST, 'Invalid key requested')
 		requested_key = open('keys/%s/%s.key' % (client, token_data['key']), 'r').read()
 	except KeyError:
-		raise BadRequest("JWT did not contain attribute 'key'")
+		raise FoxlockError(BAD_REQUEST, "JWT did not contain attribute 'key'")
 	except IOError:
-		raise BadRequest("Key '%s' not found" % token_data['key'])
+		raise FoxlockError(BAD_REQUEST, "Key '%s' not found" % token_data['key'])
 
 	# Key is returned in a JWT encrypted with the client's public key, so only they can decrypt it
 	keytoken = packJWT({'key': requested_key}, SERVER_JWT_PRIVATE_KEY, client_pub_key)
@@ -41,6 +45,8 @@ def addKey(client):
 	"""Adds a new key with the specified name and contents.
 	Returns an error if a key with the specified name already exists.
 	"""
+	global BAD_REQUEST
+
 	validateClient(client)
 
 	client_pub_key = loadClientRSAKey(client)
@@ -52,7 +58,7 @@ def addKey(client):
 		with open('keys/%s/%s.key' % (client, token_data['name']), 'x') as f:
 			f.write(token_data['key'])
 	except FileExistsError:
-		raise BadRequest("Key '%s' already exists" % token_data['name'])
+		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % token_data['name'])
 
 	return 'Key successfully created'
 
@@ -60,6 +66,8 @@ def updateKey(client):
 	"""Updates the contents of a key that already exists in our system.
 	Returns an error if the specified key doesn't exist for the specified user.
 	"""
+	global NOT_FOUND
+
 	validateClient(client)
 
 	client_pub_key = loadClientRSAKey(client)
@@ -71,7 +79,7 @@ def updateKey(client):
 		with open('keys/%s/%s.key' % (client, token_data['name']), 'w') as f:
 			f.write(token_data['key'])
 	else:
-		raise NotFound("Key '%s' not found" % token_data['name'])
+		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % token_data['name'])
 
 	return 'Key successfully updated'
 
@@ -85,25 +93,31 @@ def getJwtKey():
 ##################
 
 def validateClient(client):
+	global BAD_REQUEST
+	global NOT_FOUND
+
 	if re.search('[^a-zA-Z0-9]', client):
-		raise BadRequest('Client may only have alpha-numeric names')
+		raise FoxlockError(BAD_REQUEST, 'Client may only have alpha-numeric names')
 	if not os.path.isdir('keys/' + client):
-		raise NotFound("Client '%s' not found" % client)
+		raise FoxlockError(NOT_FOUND, "Client '%s' not found" % client)
 
 def loadClientRSAKey(client):
 	"""Load a client's RSA public key, if they exist in our system"""
+	global NOT_FOUND
+
 	try:
 		key = open('keys/%s/key_rsa.pub' % client, 'rb').read()
 	except IOError:
-		raise NotFound('Client RSA public key not found')
+		raise FoxlockError(NOT_FOUND, 'Client RSA public key not found')
 	return key
 
 def decodeRequestToken(auth_header, client_pub_key):
 	"""Decrypts / decodes the request's JWT with the server's JWT private key."""
 	global SERVER_JWT_PRIVATE_KEY
+	global BAD_REQUEST
 
 	if auth_header is None:
-		raise BadRequest('No token found in request')
+		raise FoxlockError(BAD_REQUEST, 'No token found in request')
 
 	token = auth_header.lstrip('Bearer ')
 
@@ -111,18 +125,20 @@ def decodeRequestToken(auth_header, client_pub_key):
 	try:
 		decoded_token_data = unpackJWT(token, client_pub_key, SERVER_JWT_PRIVATE_KEY)
 	except jwt.exceptions.DecodeError:
-		raise BadRequest('Failed to decode JWT. Are you using the right key?')
+		raise FoxlockError(BAD_REQUEST, 'Failed to decode JWT. Are you using the right key?')
 	except jwt.exceptions.InvalidTokenError:
-		raise BadRequest('JWT is malformed')
+		raise FoxlockError(BAD_REQUEST, 'JWT is malformed')
 	return decoded_token_data
 
 def validateNewKeyData(data):
 	"""Verify that the client provided a key name and key data in their request"""
+	global BAD_REQUEST
+
 	try:
 		data['name']
 		data['key']
 	except KeyError:
-		raise BadRequest("Token data must include 'key' and 'name'")
+		raise FoxlockError(BAD_REQUEST, "Token data must include 'key' and 'name'")
 
 
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
@@ -139,4 +155,11 @@ def unpackJWT(encoded_jwt, verify_key, decrypt_key):
 	dec_token = HybridRSA.decrypt(decoded, decrypt_key)
 	token = jwt.decode(dec_token, verify_key, algorithm='RS256')
 	return token
+
+
+class FoxlockError(Exception):
+	"""This gives us a general purpose error Flask can catch"""
+	def __init__(self, code, message):
+		self.message = message
+		self.code = code
 

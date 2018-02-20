@@ -1,6 +1,5 @@
 from flask import Flask, request
 
-from errors import FoxlockError, BadRequest
 import impl
 
 app = Flask('foxlock');
@@ -23,7 +22,7 @@ def jwtKeyRoute():
 	"""This endpoint returns the public key of the RSA key-pair we use to sign our JWTs."""
 	return impl.getJwtKey()
 
-@app.errorhandler(FoxlockError)
+@app.errorhandler(impl.FoxlockError)
 def handle_error(error):
 	return error.message, error.code
 
