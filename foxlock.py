@@ -15,7 +15,7 @@ def keyRoute(client):
 		return impl.updateKey(client)
 	# Flask should automatically reject a request that doesn't match one of the above methods,
 	# but defensive coding says we should catch this case anyway.
-	raise BadRequest()
+	raise impl.FoxlockError(impl.BAD_REQUEST, "Unsupported method '%s'" % request.method)
 
 @app.route('/jwtkey', methods=['GET'])
 def jwtKeyRoute():
