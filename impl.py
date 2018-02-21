@@ -25,14 +25,12 @@ def getKey(client):
 	global BAD_REQUEST
 
 	validateClient(client)
-
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
+	validateKeyName(token_data['key'])
 
 	# Keys may only have alpha-numeric names
 	try:
-		if re.search('[^a-zA-Z0-9]', token_data['key']):
-			raise FoxlockError(BAD_REQUEST, 'Invalid key requested')
 		requested_key = open('keys/%s/%s.key' % (client, token_data['key']), 'r').read()
 	except KeyError:
 		raise FoxlockError(BAD_REQUEST, "JWT did not contain attribute 'key'")
@@ -52,10 +50,10 @@ def addKey(client):
 	global CREATED
 
 	validateClient(client)
-
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
 	validateNewKeyData(token_data)
+	validateKeyName(token_data['name'])
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
@@ -74,10 +72,10 @@ def updateKey(client):
 	global CREATED
 
 	validateClient(client)
-
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
 	validateNewKeyData(token_data)
+	validateKeyName(token_data['name'])
 
 	# Use 'w' flag to replace existing key file with the new key data
 	if os.path.isfile('keys/%s/%s.key' % (client, token_data['name'])):
@@ -92,16 +90,12 @@ def deleteKey(client):
 	"""Deletes the specified key.
 	Returns an error if the key doesn't exist
 	"""
-	global BAD_REQUEST
 	global NOT_FOUND
 
 	validateClient(client)
-
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-
-	if re.search('[^a-zA-Z0-9]', token_data['key']):
-		raise FoxlockError(BAD_REQUEST, 'Invalid key requested')
+	validateKeyName(token_data['key'])
 
 	try:
 		os.remove('keys/%s/%s.key' % (client, token_data['key']))
@@ -169,6 +163,12 @@ def validateNewKeyData(data):
 	if len(data['key']) > KEY_SIZE_LIMIT:
 		raise FoxlockError(BAD_REQUEST, 'Key size limited to %s bytes' % KEY_SIZE_LIMIT)
 
+def validateKeyName(name):
+	"""Ensures key names are alpha-numeric"""
+	global BAD_REQUEST
+
+	if re.search('[^a-zA-Z0-9]', name):
+		raise FoxlockError(BAD_REQUEST, 'Invalid key name')
 
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
 
