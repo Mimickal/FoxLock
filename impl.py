@@ -27,15 +27,17 @@ def getKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-	validateKeyName(token_data['key'])
+
+	key_name = token_data['name']
+	validateKeyName(key_name)
 
 	# Keys may only have alpha-numeric names
 	try:
-		requested_key = open('keys/%s/%s.key' % (client, token_data['key']), 'r').read()
+		requested_key = open('keys/%s/%s.key' % (client, key_name), 'r').read()
 	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "JWT did not contain attribute 'key'")
+		raise FoxlockError(BAD_REQUEST, "JWT did not contain attribute 'name'")
 	except IOError:
-		raise FoxlockError(BAD_REQUEST, "Key '%s' not found" % token_data['key'])
+		raise FoxlockError(BAD_REQUEST, "Key '%s' not found" % key_name)
 
 	# Key is returned in a JWT encrypted with the client's public key, so only they can decrypt it
 	keytoken = packJWT({'key': requested_key}, SERVER_JWT_PRIVATE_KEY, client_pub_key)
@@ -53,14 +55,16 @@ def addKey(client):
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
 	validateNewKeyData(token_data)
-	validateKeyName(token_data['name'])
+
+	key_name = token_data['name']
+	validateKeyName(key_name)
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
-		with open('keys/%s/%s.key' % (client, token_data['name']), 'x') as f:
-			f.write(token_data['key'])
+		with open('keys/%s/%s.key' % (client, key_name), 'x') as f:
+			f.write(token_data['data'])
 	except FileExistsError:
-		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % token_data['name'])
+		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % key_name)
 
 	return 'Key successfully created', CREATED
 
@@ -75,14 +79,17 @@ def updateKey(client):
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
 	validateNewKeyData(token_data)
-	validateKeyName(token_data['name'])
+
+	key_name = token_data['name']
+	validateKeyName(key_name)
 
 	# Use 'w' flag to replace existing key file with the new key data
-	if os.path.isfile('keys/%s/%s.key' % (client, token_data['name'])):
-		with open('keys/%s/%s.key' % (client, token_data['name']), 'w') as f:
-			f.write(token_data['key'])
+	key_path = 'keys/%s/%s.key' % (client, key_name)
+	if os.path.isfile(key_path):
+		with open(key_path, 'w') as f:
+			f.write(token_data['data'])
 	else:
-		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % token_data['name'])
+		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % key_name)
 
 	return 'Key successfully updated', CREATED
 
@@ -95,14 +102,16 @@ def deleteKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-	validateKeyName(token_data['key'])
+
+	key_name = token_data['name']
+	validateKeyName(key_name)
 
 	try:
-		os.remove('keys/%s/%s.key' % (client, token_data['key']))
+		os.remove('keys/%s/%s.key' % (client, key_name))
 	except FileNotFoundError:
-		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % token_data['key'])
+		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % key_name)
 
-	return "Key '%s' successfully deleted" % token_data['key']
+	return "Key '%s' successfully deleted" % key_name
 
 def getJwtKey():
 	"""Simply returns the RSA public key the server uses to sign JWTs"""
@@ -156,11 +165,11 @@ def validateNewKeyData(data):
 
 	try:
 		data['name']
-		data['key']
+		data['data']
 	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "Token data must include 'key' and 'name'")
+		raise FoxlockError(BAD_REQUEST, "Token payload must include 'name' and 'data'")
 
-	if len(data['key']) > KEY_SIZE_LIMIT:
+	if len(data['data']) > KEY_SIZE_LIMIT:
 		raise FoxlockError(BAD_REQUEST, 'Key size limited to %s bytes' % KEY_SIZE_LIMIT)
 
 def validateKeyName(name):
