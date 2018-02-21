@@ -4,7 +4,7 @@ import impl
 
 app = Flask('foxlock');
 
-@app.route('/key/<client>', methods=['GET', 'POST', 'PUT'])
+@app.route('/key/<client>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def keyRoute(client):
 	"""This endpoint provides basic CRUD operations for client keys"""
 	if request.method == 'GET':
@@ -13,6 +13,9 @@ def keyRoute(client):
 		return impl.addKey(client)
 	if request.method == 'PUT':
 		return impl.updateKey(client)
+	if request.method == 'DELETE':
+		return impl.deleteKey(client)
+
 	# Flask should automatically reject a request that doesn't match one of the above methods,
 	# but defensive coding says we should catch this case anyway.
 	raise impl.FoxlockError(impl.BAD_REQUEST, "Unsupported method '%s'" % request.method)
