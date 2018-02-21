@@ -18,9 +18,9 @@ NOT_FOUND = 404
 KEY_SIZE_LIMIT = int(1e4)
 
 def getKey(client):
-	"""Retrieves the specified key for the specified client
+	'''Retrieves the specified key for the specified client
 	Returns an error if the key doesn't exist, obviously.
-	"""
+	'''
 	global SERVER_JWT_PRIVATE_KEY
 	global BAD_REQUEST
 
@@ -33,7 +33,7 @@ def getKey(client):
 	try:
 		requested_key = open('keys/%s/%s.key' % (client, key_name), 'r').read()
 	except IOError:
-		raise FoxlockError(BAD_REQUEST, "Key '%s' not found" % key_name)
+		raise FoxlockError(BAD_REQUEST, 'Key "%s" not found' % key_name)
 
 	# Key is returned in a JWT encrypted with the client's public key, so only they can decrypt it
 	keytoken = packJWT({'key': requested_key}, SERVER_JWT_PRIVATE_KEY, client_pub_key)
@@ -41,9 +41,9 @@ def getKey(client):
 	return keytoken
 
 def addKey(client):
-	"""Adds a new key with the specified name and contents.
+	'''Adds a new key with the specified name and contents.
 	Returns an error if a key with the specified name already exists.
-	"""
+	'''
 	global BAD_REQUEST
 	global CREATED
 
@@ -58,14 +58,14 @@ def addKey(client):
 		with open('keys/%s/%s.key' % (client, key_name), 'x') as f:
 			f.write(key_data)
 	except FileExistsError:
-		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % key_name)
+		raise FoxlockError(BAD_REQUEST, 'Key "%s" already exists' % key_name)
 
 	return 'Key successfully created', CREATED
 
 def updateKey(client):
-	"""Updates the contents of a key that already exists in our system.
+	'''Updates the contents of a key that already exists in our system.
 	Returns an error if the specified key doesn't exist for the specified user.
-	"""
+	'''
 	global NOT_FOUND
 	global CREATED
 
@@ -81,14 +81,14 @@ def updateKey(client):
 		with open(key_path, 'w') as f:
 			f.write(key_data)
 	else:
-		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % key_name)
+		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
 	return 'Key successfully updated', CREATED
 
 def deleteKey(client):
-	"""Deletes the specified key.
+	'''Deletes the specified key.
 	Returns an error if the key doesn't exist
-	"""
+	'''
 	global NOT_FOUND
 
 	validateClient(client)
@@ -99,12 +99,12 @@ def deleteKey(client):
 	try:
 		os.remove('keys/%s/%s.key' % (client, key_name))
 	except FileNotFoundError:
-		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % key_name)
+		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
-	return "Key '%s' successfully deleted" % key_name
+	return 'Key "%s" successfully deleted' % key_name
 
 def getJwtKey():
-	"""Simply returns the RSA public key the server uses to sign JWTs"""
+	'''Simply returns the RSA public key the server uses to sign JWTs'''
 	global SERVER_JWT_PUBLIC_KEY
 	return SERVER_JWT_PUBLIC_KEY
 
@@ -113,16 +113,17 @@ def getJwtKey():
 ##################
 
 def validateClient(client):
+	'''Validate client name is alpha-numeric and exists in our system'''
 	global BAD_REQUEST
 	global NOT_FOUND
 
 	if re.search('[^a-zA-Z0-9]', client):
 		raise FoxlockError(BAD_REQUEST, 'Client may only have alpha-numeric names')
 	if not os.path.isdir('keys/' + client):
-		raise FoxlockError(NOT_FOUND, "Client '%s' not found" % client)
+		raise FoxlockError(NOT_FOUND, 'Client "%s" not found' % client)
 
 def loadClientRSAKey(client):
-	"""Load a client's RSA public key, if they exist in our system"""
+	'''Load a client's RSA public key, if they exist in our system'''
 	global NOT_FOUND
 
 	try:
@@ -132,7 +133,7 @@ def loadClientRSAKey(client):
 	return key
 
 def decodeRequestToken(token, client_pub_key):
-	"""Decrypts / decodes the request's JWT with the server's JWT private key."""
+	'''Decrypts / decodes the request's JWT with the server's JWT private key'''
 	global SERVER_JWT_PRIVATE_KEY
 	global BAD_REQUEST
 
@@ -149,13 +150,13 @@ def decodeRequestToken(token, client_pub_key):
 	return decoded_token_data
 
 def validateKeyName(token_data):
-	"""Verify key name exists and is alpha-numeric"""
+	'''Verify key name exists and is alpha-numeric'''
 	global BAD_REQUEST
 
 	try:
 		name = token_data['name']
 	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "'name' not provided in JWT payload")
+		raise FoxlockError(BAD_REQUEST, '"name" not provided in JWT payload')
 
 	if re.search('[^a-zA-Z0-9]', name):
 		raise FoxlockError(BAD_REQUEST, 'Invalid key name')
@@ -163,14 +164,14 @@ def validateKeyName(token_data):
 	return name
 
 def validateKeyData(token_data):
-	"""Verify key data exists and is valid"""
+	'''Verify key data exists and is valid'''
 	global BAD_REQUEST
 	global KEY_SIZE_LIMIT
 
 	try:
 		data = token_data['data']
 	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "'data' not provided in JWT payload")
+		raise FoxlockError(BAD_REQUEST, '"data" not provided in JWT payload')
 
 	if len(data) > KEY_SIZE_LIMIT:
 		raise FoxlockError(BAD_REQUEST, 'Key size limited to %s bytes' % KEY_SIZE_LIMIT)
@@ -180,13 +181,13 @@ def validateKeyData(token_data):
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
 
 def packJWT(data, sign_key, encrypt_key):
-	"""Encrypt/encode in a compact statement"""
+	'''Encrypt/encode in a compact statement'''
 	token = jwt.encode(data, sign_key, algorithm='RS256')
 	enc_token = HybridRSA.encrypt(token, encrypt_key)
 	return b64encode(enc_token).decode('utf-8')
 
 def unpackJWT(encoded_jwt, verify_key, decrypt_key):
-	"""Decode/Decrypt in a compact statement"""
+	'''Decode/Decrypt in a compact statement'''
 	decoded = b64decode(encoded_jwt)
 	dec_token = HybridRSA.decrypt(decoded, decrypt_key)
 	token = jwt.decode(dec_token, verify_key, algorithm='RS256')
@@ -194,7 +195,7 @@ def unpackJWT(encoded_jwt, verify_key, decrypt_key):
 
 
 class FoxlockError(Exception):
-	"""This gives us a general purpose error Flask can catch"""
+	'''This gives us a general purpose error Flask can catch'''
 	def __init__(self, code, message):
 		self.message = message
 		self.code = code
