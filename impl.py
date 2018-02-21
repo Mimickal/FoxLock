@@ -27,15 +27,11 @@ def getKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-
-	key_name = token_data['name']
-	validateKeyName(key_name)
+	key_name = validateKeyData(token_data)
 
 	# Keys may only have alpha-numeric names
 	try:
 		requested_key = open('keys/%s/%s.key' % (client, key_name), 'r').read()
-	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "JWT did not contain attribute 'name'")
 	except IOError:
 		raise FoxlockError(BAD_REQUEST, "Key '%s' not found" % key_name)
 
@@ -54,15 +50,13 @@ def addKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-	validateNewKeyData(token_data)
-
-	key_name = token_data['name']
-	validateKeyName(key_name)
+	key_name = validateKeyName(token_data)
+	key_data = validateKeyData(token_data)
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
 		with open('keys/%s/%s.key' % (client, key_name), 'x') as f:
-			f.write(token_data['data'])
+			f.write(key_data)
 	except FileExistsError:
 		raise FoxlockError(BAD_REQUEST, "Key '%s' already exists" % key_name)
 
@@ -78,16 +72,14 @@ def updateKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-	validateNewKeyData(token_data)
-
-	key_name = token_data['name']
-	validateKeyName(key_name)
+	key_name = validateKeyName(token_data)
+	key_data = validateKeyName(token_data)
 
 	# Use 'w' flag to replace existing key file with the new key data
 	key_path = 'keys/%s/%s.key' % (client, key_name)
 	if os.path.isfile(key_path):
 		with open(key_path, 'w') as f:
-			f.write(token_data['data'])
+			f.write(key_data)
 	else:
 		raise FoxlockError(NOT_FOUND, "Key '%s' not found" % key_name)
 
@@ -102,9 +94,7 @@ def deleteKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request.data, client_pub_key)
-
-	key_name = token_data['name']
-	validateKeyName(key_name)
+	key_name = validateKeyName(token_data)
 
 	try:
 		os.remove('keys/%s/%s.key' % (client, key_name))
@@ -158,26 +148,34 @@ def decodeRequestToken(token, client_pub_key):
 		raise FoxlockError(BAD_REQUEST, 'JWT is malformed')
 	return decoded_token_data
 
-def validateNewKeyData(data):
-	"""Verify the request key name and key data are valid"""
+def validateKeyName(token_data):
+	"""Verify key name exists and is alpha-numeric"""
+	global BAD_REQUEST
+
+	try:
+		name = token_data['name']
+	except KeyError:
+		raise FoxlockError(BAD_REQUEST, "'name' not provided in JWT payload")
+
+	if re.search('[^a-zA-Z0-9]', name):
+		raise FoxlockError(BAD_REQUEST, 'Invalid key name')
+
+	return name
+
+def validateKeyData(token_data):
+	"""Verify key data exists and is valid"""
 	global BAD_REQUEST
 	global KEY_SIZE_LIMIT
 
 	try:
-		data['name']
-		data['data']
+		data = token_data['data']
 	except KeyError:
-		raise FoxlockError(BAD_REQUEST, "Token payload must include 'name' and 'data'")
+		raise FoxlockError(BAD_REQUEST, "'data' not provided in JWT payload")
 
-	if len(data['data']) > KEY_SIZE_LIMIT:
+	if len(data) > KEY_SIZE_LIMIT:
 		raise FoxlockError(BAD_REQUEST, 'Key size limited to %s bytes' % KEY_SIZE_LIMIT)
 
-def validateKeyName(name):
-	"""Ensures key names are alpha-numeric"""
-	global BAD_REQUEST
-
-	if re.search('[^a-zA-Z0-9]', name):
-		raise FoxlockError(BAD_REQUEST, 'Invalid key name')
+	return data
 
 # We've switched JWT libraries 3 times in one week, so let's just wrap JWT functionality
 
