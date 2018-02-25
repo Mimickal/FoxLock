@@ -2,6 +2,13 @@ from unittest import TestCase, main
 
 import foxlock
 
+# FIXME maybe we shouldn't import this into the tests...
+from impl import packJWT, unpackJWT
+
+# FIXME Refactor this so tests have their own dedicated resources.
+SERVER_JWT_KEY = open('resources/jwt_key.pub', 'rb').read()
+CLIENT_PRI_KEY = open('tempdevstuff/key_rsa', 'rb').read()
+
 foxlock.app.config['TESTING'] = True
 foxlock.app.config['DEBUG'] = True
 
@@ -16,9 +23,6 @@ Yeah, it's kinda dirty. If unittest was like Mocha we wouldn't need to do this.
 '''
 
 # Tests for all methods
-
-def makeRequest(self, url):
-	return getattr(self.app, self.method)(url)
 
 def test_invalidClientName(self):
 	badClientName = '!!some%dir~@'
@@ -49,6 +53,16 @@ def test_emptyRequestBody(self):
 	self.assertEqual(resp_text, 'No token found in request body')
 
 def test_invalidKeyName(self):
+	badKeyName = '!..bad&key'
+
+	encoded_jwt = encodeJWT({'name': badKeyName})
+	resp = makeRequest(self, self.url + 'testuser', encoded_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Invalid key name')
+
 	raise NotImplementedError()
 
 def test_clientMessageEncryptedWithWrongKey(self):
@@ -82,6 +96,23 @@ def test_JWTWithoutKeyBody(self):
 
 def test_newKeyTooLarge(self):
 	raise NotImplementedError()
+
+
+
+# Helper functions
+
+def makeRequest(self, url, data=None):
+	return getattr(self.app, self.method)(url, data = data)
+
+def encodeJWT(data):
+	global CLIENT_PRI_KEY
+	global SERVER_JWT_KEY
+	return packJWT(data, CLIENT_PRI_KEY, SERVER_JWT_KEY)
+
+def decodeJWT(data):
+	global SERVER_JWT_KEY
+	global CLIENT_PRI_KEY
+	return unpackJWT(data, SERVER_JWT_KEY, CLIENT_PRI_KEY)
 
 
 
