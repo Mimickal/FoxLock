@@ -14,8 +14,18 @@ Yeah, it's kinda dirty. If unittest was like Mocha we wouldn't need to do this.
 
 # Tests for all methods
 
+def makeRequest(self, url):
+	return getattr(self.app, self.method)(url)
+
 def test_invalidClientName(self):
-	raise NotImplementedError()
+	badClientName = '!!some%dir~@'
+
+	resp = makeRequest(self, self.url + badClientName)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Client may only have alpha-numeric names')
 
 def test_requestedClientDoesNotExist(self):
 	raise NotImplementedError()
@@ -67,13 +77,15 @@ def bindTest(klass, function):
 class KeyTest(TestCase):
 	'''Base class for key endpoint tests'''
 	def setUp(self):
-		self.url = 'https://localhost:5000/key/testuser'
+		self.app = foxlock.app.test_client()
+		self.url = '/key/'
+		self.user = 'testuser'
 
 
 class GetKey(KeyTest):
 	'''Test class for key endpoint GET method tests'''
 	def setUp(self):
-		super(KeyTest, self).setUp()
+		KeyTest.setUp(self)
 		self.method = 'get'
 
 bindTest(GetKey, test_invalidClientName)
@@ -91,7 +103,7 @@ bindTest(GetKey, test_requestNonExistingKey)
 class PostKey(KeyTest):
 	'''Test class for key endpoint POST method tests'''
 	def setUp(self):
-		super(KeyTest, self).setUp()
+		KeyTest.setUp(self)
 		self.method = 'post'
 
 bindTest(PostKey, test_invalidClientName)
@@ -110,7 +122,7 @@ bindTest(PostKey, test_newKeyTooLarge)
 class PutKey(KeyTest):
 	'''Test class for key endpoint PUT method tests'''
 	def setUp(self):
-		super(KeyTest, self).setUp()
+		KeyTest.setUp(self)
 		self.method = 'put'
 
 bindTest(PutKey, test_invalidClientName)
@@ -129,7 +141,7 @@ bindTest(PutKey, test_newKeyTooLarge)
 class DeleteKey(KeyTest):
 	'''Test class for key endpoint DELETE method tests'''
 	def setUp(self):
-		super(KeyTest, self).setUp()
+		KeyTest.setUp(self)
 		self.method = 'delete'
 
 bindTest(DeleteKey, test_invalidClientName)
