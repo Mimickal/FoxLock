@@ -40,6 +40,14 @@ def test_requestedClientDoesNotExist(self):
 		self.assertEqual(resp.status_code, 404)
 	self.assertEqual(resp_text, 'Client "%s" not found' % nonExistingClientName)
 
+def test_emptyRequestBody(self):
+	resp = makeRequest(self, self.url + 'testuser')
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'No token found in request body')
+
 def test_invalidKeyName(self):
 	raise NotImplementedError()
 
@@ -106,6 +114,7 @@ bindTest(GetKey, test_malformedJWT)
 bindTest(GetKey, test_JWTSignedWithWrongKey)
 bindTest(GetKey, test_requestInvalidKey)
 bindTest(GetKey, test_JWTsAreOneTimeUse)
+bindTest(GetKey, test_emptyRequestBody)
 
 bindTest(GetKey, test_requestNonExistingKey)
 
@@ -124,6 +133,7 @@ bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
 bindTest(PostKey, test_requestInvalidKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
+bindTest(PostKey, test_emptyRequestBody)
 
 bindTest(PostKey, test_JWTWithoutKeyBody)
 bindTest(PostKey, test_newKeyTooLarge)
@@ -143,6 +153,7 @@ bindTest(PutKey, test_malformedJWT)
 bindTest(PutKey, test_JWTSignedWithWrongKey)
 bindTest(PutKey, test_requestInvalidKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
+bindTest(PutKey, test_emptyRequestBody)
 
 bindTest(PutKey, test_JWTWithoutKeyBody)
 bindTest(PutKey, test_newKeyTooLarge)
@@ -164,6 +175,7 @@ bindTest(DeleteKey, test_requestInvalidKey)
 bindTest(DeleteKey, test_JWTsAreOneTimeUse)
 
 bindTest(DeleteKey, test_requestNonExistingKey)
+bindTest(DeleteKey, test_emptyRequestBody)
 
 
 if __name__ == '__main__':
