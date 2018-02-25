@@ -31,7 +31,14 @@ def test_invalidClientName(self):
 	self.assertEqual(resp_text, 'Client may only have alpha-numeric names')
 
 def test_requestedClientDoesNotExist(self):
-	raise NotImplementedError()
+	nonExistingClientName = 'notaclient'
+
+	resp = makeRequest(self, self.url + nonExistingClientName)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 404)
+	self.assertEqual(resp_text, 'Client "%s" not found' % nonExistingClientName)
 
 def test_invalidKeyName(self):
 	raise NotImplementedError()
