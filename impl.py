@@ -26,7 +26,7 @@ def getKey(client):
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
-	token_data = decodeRequestToken(request.data, client_pub_key)
+	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyData(token_data)
 
 	# Keys may only have alpha-numeric names
@@ -49,7 +49,7 @@ def addKey(client):
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
-	token_data = decodeRequestToken(request.data, client_pub_key)
+	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
 	key_data = validateKeyData(token_data)
 
@@ -71,7 +71,7 @@ def updateKey(client):
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
-	token_data = decodeRequestToken(request.data, client_pub_key)
+	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
 	key_data = validateKeyName(token_data)
 
@@ -93,7 +93,7 @@ def deleteKey(client):
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
-	token_data = decodeRequestToken(request.data, client_pub_key)
+	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
 
 	try:
@@ -132,13 +132,14 @@ def loadClientRSAKey(client):
 		raise FoxlockError(NOT_FOUND, 'Client RSA public key not found')
 	return key
 
-def decodeRequestToken(token, client_pub_key):
+def decodeRequestToken(req, client_pub_key):
 	'''Decrypts / decodes the request's JWT with the server's JWT private key'''
 	global SERVER_JWT_PRIVATE_KEY
 	global BAD_REQUEST
 
-	if token is None:
-		raise FoxlockError(BAD_REQUEST, 'No token found in request')
+	token = req.get_data(as_text=True)
+	if not token:
+		raise FoxlockError(BAD_REQUEST, 'No token found in request body')
 
 	# Most JWT errors will come from clients signing JWTs with the wrong key
 	try:
