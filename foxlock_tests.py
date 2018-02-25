@@ -139,13 +139,13 @@ class GetKey(KeyTest):
 
 bindTest(GetKey, test_invalidClientName)
 bindTest(GetKey, test_requestedClientDoesNotExist)
+bindTest(GetKey, test_emptyRequestBody)
 bindTest(GetKey, test_invalidKeyName)
 bindTest(GetKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(GetKey, test_malformedJWT)
 bindTest(GetKey, test_JWTSignedWithWrongKey)
 bindTest(GetKey, test_requestInvalidKey)
 bindTest(GetKey, test_JWTsAreOneTimeUse)
-bindTest(GetKey, test_emptyRequestBody)
 
 bindTest(GetKey, test_requestNonExistingKey)
 
@@ -158,13 +158,13 @@ class PostKey(KeyTest):
 
 bindTest(PostKey, test_invalidClientName)
 bindTest(PostKey, test_requestedClientDoesNotExist)
+bindTest(PostKey, test_emptyRequestBody)
 bindTest(PostKey, test_invalidKeyName)
 bindTest(PostKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
 bindTest(PostKey, test_requestInvalidKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
-bindTest(PostKey, test_emptyRequestBody)
 
 bindTest(PostKey, test_JWTWithoutKeyBody)
 bindTest(PostKey, test_newKeyTooLarge)
@@ -178,13 +178,13 @@ class PutKey(KeyTest):
 
 bindTest(PutKey, test_invalidClientName)
 bindTest(PutKey, test_requestedClientDoesNotExist)
+bindTest(PutKey, test_emptyRequestBody)
 bindTest(PutKey, test_invalidKeyName)
 bindTest(PutKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PutKey, test_malformedJWT)
 bindTest(PutKey, test_JWTSignedWithWrongKey)
 bindTest(PutKey, test_requestInvalidKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
-bindTest(PutKey, test_emptyRequestBody)
 
 bindTest(PutKey, test_JWTWithoutKeyBody)
 bindTest(PutKey, test_newKeyTooLarge)
@@ -198,6 +198,7 @@ class DeleteKey(KeyTest):
 
 bindTest(DeleteKey, test_invalidClientName)
 bindTest(DeleteKey, test_requestedClientDoesNotExist)
+bindTest(DeleteKey, test_emptyRequestBody)
 bindTest(DeleteKey, test_invalidKeyName)
 bindTest(DeleteKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(DeleteKey, test_malformedJWT)
@@ -206,7 +207,6 @@ bindTest(DeleteKey, test_requestInvalidKey)
 bindTest(DeleteKey, test_JWTsAreOneTimeUse)
 
 bindTest(DeleteKey, test_requestNonExistingKey)
-bindTest(DeleteKey, test_emptyRequestBody)
 
 
 if __name__ == '__main__':
