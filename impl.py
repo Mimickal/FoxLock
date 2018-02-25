@@ -27,7 +27,7 @@ def getKey(client):
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request, client_pub_key)
-	key_name = validateKeyData(token_data)
+	key_name = validateKeyName(token_data)
 
 	# Keys may only have alpha-numeric names
 	try:
