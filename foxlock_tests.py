@@ -2,6 +2,9 @@ from unittest import TestCase, main
 
 import foxlock
 
+foxlock.app.config['TESTING'] = True
+foxlock.app.config['DEBUG'] = True
+
 '''This module tests our application's endpoints.
 
 Since many tests will be very similar for every HTTP method, we define them
