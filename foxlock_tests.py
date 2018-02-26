@@ -11,6 +11,9 @@ import HybridRSA
 SERVER_JWT_KEY = open('resources/jwt_key.pub', 'rb').read()
 CLIENT_PRI_KEY = open('tempdevstuff/key_rsa', 'rb').read()
 
+# Cache this because it's slow af
+TEST_RSA_KEY = RSA.generate(2048)
+
 foxlock.app.config['TESTING'] = True
 foxlock.app.config['DEBUG'] = True
 
@@ -76,7 +79,8 @@ def test_JWTWithoutKeyName(self):
 
 def test_clientMessageEncryptedWithWrongKey(self):
 	global CLIENT_PRI_KEY
-	wrongKey = RSA.generate(2048).publickey().exportKey()
+	global TEST_RSA_KEY
+	wrongKey = TEST_RSA_KEY.publickey().exportKey()
 
 	token = jwt.encode({}, CLIENT_PRI_KEY, algorithm='RS256')
 	enc_token = HybridRSA.encrypt(token, wrongKey)
@@ -105,7 +109,8 @@ def test_malformedJWT(self):
 
 def test_JWTSignedWithWrongKey(self):
 	global SERVER_JWT_KEY
-	wrongKey = RSA.generate(2048).exportKey()
+	global TEST_RSA_KEY
+	wrongKey = TEST_RSA_KEY.exportKey()
 
 	bad_signed_token = jwt.encode({}, wrongKey, algorithm='RS256')
 	enc_token = HybridRSA.encrypt(bad_signed_token, SERVER_JWT_KEY)
