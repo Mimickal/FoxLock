@@ -80,7 +80,7 @@ def updateKey(client):
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
-	key_data = validateKeyName(token_data)
+	key_data = validateKeyData(token_data)
 
 	# Use 'w' flag to replace existing key file with the new key data
 	key_path = 'keys/%s/%s.key' % (client, key_name)
