@@ -154,7 +154,15 @@ def test_JWTWithoutKeyData(self):
 # Tests for POST
 
 def test_keyAlreadyExists(self):
-	raise NotImplementedError()
+	existing_key_name = 'testkey'
+
+	existing_key_jwt = packJWT({'name': existing_key_name, 'data': 'this shouldnt be written'})
+	resp = makeRequest(self, self.url + 'testuser', existing_key_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Key "%s" already exists' % existing_key_name)
 
 def test_newKeyTooLarge(self):
 	key_name = 'newkey'
