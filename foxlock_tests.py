@@ -122,7 +122,6 @@ def test_JWTsAreOneTimeUse(self):
 	raise NotImplementedError()
 
 
-
 # Tests for GET, PUT, and DELETE
 
 def test_requestNonExistingKey(self):
@@ -137,7 +136,6 @@ def test_requestNonExistingKey(self):
 	self.assertEqual(resp_text, 'Key "%s" not found' % non_exist_key_name)
 
 
-
 # Tests for POST and PUT
 
 def test_JWTWithoutKeyData(self):
@@ -148,7 +146,6 @@ def test_JWTWithoutKeyData(self):
 	with self.subTest():
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, '"data" not provided in JWT payload')
-
 
 
 # Tests for POST
@@ -174,7 +171,6 @@ def test_newKeyTooLarge(self):
 		pass
 
 	keyTooLargeHelper(self, 'newkey')
-
 
 
 # Tests for PUT
@@ -267,9 +263,9 @@ bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
 
+bindTest(PostKey, test_JWTWithoutKeyData)
 bindTest(PostKey, test_newKeyTooLarge)
 bindTest(PostKey, test_keyAlreadyExists)
-bindTest(PostKey, test_JWTWithoutKeyData)
 
 
 class PutKey(KeyTest):
