@@ -1,10 +1,10 @@
 from unittest import TestCase, main
 from Crypto.PublicKey import RSA
+import jwt
+from base64 import b64encode, b64decode
 
 import foxlock
-
-# FIXME maybe we shouldn't import this into the tests...
-from impl import packJWT, unpackJWT
+import HybridRSA
 
 # FIXME Refactor this so tests have their own dedicated resources.
 SERVER_JWT_KEY = open('resources/jwt_key.pub', 'rb').read()
@@ -56,7 +56,7 @@ def test_emptyRequestBody(self):
 def test_invalidKeyName(self):
 	badKeyName = '!..bad&key'
 
-	encoded_jwt = encodeJWT({'name': badKeyName})
+	encoded_jwt = packJWT({'name': badKeyName})
 	resp = makeRequest(self, self.url + 'testuser', encoded_jwt)
 	resp_text = resp.get_data(as_text=True)
 
@@ -65,7 +65,7 @@ def test_invalidKeyName(self):
 	self.assertEqual(resp_text, 'Invalid key name')
 
 def test_JWTWithoutKeyName(self):
-	encoded_jwt = encodeJWT({})
+	encoded_jwt = packJWT({})
 	resp = makeRequest(self, self.url + 'testuser', encoded_jwt)
 	resp_text = resp.get_data(as_text=True)
 
@@ -77,7 +77,10 @@ def test_clientMessageEncryptedWithWrongKey(self):
 	global CLIENT_PRI_KEY
 	wrongKey = RSA.generate(2048).publickey().exportKey()
 
-	encoded_jwt = packJWT({}, CLIENT_PRI_KEY, wrongKey)
+	token = jwt.encode({}, CLIENT_PRI_KEY, algorithm='RS256')
+	enc_token = HybridRSA.encrypt(token, wrongKey)
+	encoded_jwt = b64encode(enc_token).decode('utf-8')
+
 	resp = makeRequest(self, self.url + 'testuser', encoded_jwt)
 	resp_text = resp.get_data(as_text=True)
 
@@ -121,15 +124,19 @@ def test_newKeyTooLarge(self):
 def makeRequest(self, url, data=None):
 	return getattr(self.app, self.method)(url, data = data)
 
-def encodeJWT(data):
+def packJWT(data):
 	global CLIENT_PRI_KEY
 	global SERVER_JWT_KEY
-	return packJWT(data, CLIENT_PRI_KEY, SERVER_JWT_KEY)
+	token = jwt.encode(data, CLIENT_PRI_KEY, algorithm='RS256')
+	enc_token = HybridRSA.encrypt(token, SERVER_JWT_KEY)
+	return b64encode(enc_token).decode('utf-8')
 
-def decodeJWT(data):
+def unpackJWT(encoded):
 	global SERVER_JWT_KEY
 	global CLIENT_PRI_KEY
-	return unpackJWT(data, SERVER_JWT_KEY, CLIENT_PRI_KEY)
+	decoded = b64decode(encoded)
+	dec_token = HybridRSA.decrypt(decoded, CLIENT_PRI_KEY)
+	return jwt.decode(dec_token, SERVER_JWT_KEY, algorithms=['RS256'])
 
 
 
