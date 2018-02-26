@@ -139,8 +139,14 @@ def test_requestNonExistingKey(self):
 
 # Tests for POST and PUT
 
-def test_JWTWithoutKeyBody(self):
-	raise NotImplementedError()
+def test_JWTWithoutKeyData(self):
+	no_key_data_jwt = packJWT({'name': 'testkey'})
+	resp = makeRequest(self, self.url + 'testuser', no_key_data_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, '"data" not provided in JWT payload')
 
 def test_newKeyTooLarge(self):
 	raise NotImplementedError()
@@ -225,9 +231,9 @@ bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
 
-bindTest(PostKey, test_JWTWithoutKeyBody)
 bindTest(PostKey, test_newKeyTooLarge)
 bindTest(PostKey, test_keyAlreadyExists)
+bindTest(PostKey, test_JWTWithoutKeyData)
 
 
 class PutKey(KeyTest):
@@ -247,8 +253,8 @@ bindTest(PutKey, test_JWTSignedWithWrongKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
 
 bindTest(PutKey, test_requestNonExistingKey)
-bindTest(PutKey, test_JWTWithoutKeyBody)
 bindTest(PutKey, test_newKeyTooLarge)
+bindTest(PutKey, test_JWTWithoutKeyData)
 
 
 class DeleteKey(KeyTest):
