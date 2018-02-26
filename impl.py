@@ -6,9 +6,16 @@ from base64 import b64encode, b64decode
 
 import HybridRSA
 
+def loadKey(path):
+	'''Cleanly load, read, and close key files'''
+	key_file = open(path, 'rb')
+	key = key_file.read()
+	key_file.close()
+	return key
+
 # Cache server keys because they don't change during program operation
-SERVER_JWT_PRIVATE_KEY = open('resources/jwt_key', 'rb').read()
-SERVER_JWT_PUBLIC_KEY  = open('resources/jwt_key.pub', 'rb').read()
+SERVER_JWT_PRIVATE_KEY = loadKey('resources/jwt_key')
+SERVER_JWT_PUBLIC_KEY  = loadKey('resources/jwt_key.pub')
 
 # HTTP response codes
 CREATED = 201
@@ -31,7 +38,7 @@ def getKey(client):
 
 	# Keys may only have alpha-numeric names
 	try:
-		requested_key = open('keys/%s/%s.key' % (client, key_name), 'r').read()
+		requested_key = loadKey('keys/%s/%s.key' % (client, key_name))
 	except IOError:
 		raise FoxlockError(BAD_REQUEST, 'Key "%s" not found' % key_name)
 
@@ -127,7 +134,7 @@ def loadClientRSAKey(client):
 	global NOT_FOUND
 
 	try:
-		key = open('keys/%s/key_rsa.pub' % client, 'rb').read()
+		key = loadKey('keys/%s/key_rsa.pub' % client)
 	except IOError:
 		raise FoxlockError(NOT_FOUND, 'Client RSA public key not found')
 	return key
