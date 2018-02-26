@@ -125,7 +125,15 @@ def test_JWTsAreOneTimeUse(self):
 # Tests for GET, PUT, and DELETE
 
 def test_requestNonExistingKey(self):
-	raise NotImplementedError()
+	non_exist_key_name = 'idontexist'
+
+	enc_jwt = packJWT({'name': non_exist_key_name})
+	resp = makeRequest(self, self.url + 'testuser', enc_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 404)
+	self.assertEqual(resp_text, 'Key "%s" not found' % non_exist_key_name)
 
 
 

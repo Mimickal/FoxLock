@@ -29,7 +29,7 @@ def getKey(client):
 	Returns an error if the key doesn't exist, obviously.
 	'''
 	global SERVER_JWT_PRIVATE_KEY
-	global BAD_REQUEST
+	global NOT_FOUND
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
@@ -40,7 +40,7 @@ def getKey(client):
 	try:
 		requested_key = loadKey('keys/%s/%s.key' % (client, key_name))
 	except IOError:
-		raise FoxlockError(BAD_REQUEST, 'Key "%s" not found' % key_name)
+		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
 	# Key is returned in a JWT encrypted with the client's public key, so only they can decrypt it
 	keytoken = packJWT({'key': requested_key}, SERVER_JWT_PRIVATE_KEY, client_pub_key)
