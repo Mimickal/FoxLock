@@ -128,7 +128,7 @@ def test_JWTsAreOneTimeUse(self):
 def test_requestNonExistingKey(self):
 	non_exist_key_name = 'idontexist'
 
-	enc_jwt = packJWT({'name': non_exist_key_name})
+	enc_jwt = packJWT({'name': non_exist_key_name, 'data': 'blah'})
 	resp = makeRequest(self, self.url + 'testuser', enc_jwt)
 	resp_text = resp.get_data(as_text=True)
 
