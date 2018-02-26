@@ -151,8 +151,8 @@ def decodeRequestToken(req, client_pub_key):
 	# Most JWT errors will come from clients signing JWTs with the wrong key
 	try:
 		decoded_token_data = unpackJWT(token, client_pub_key, SERVER_JWT_PRIVATE_KEY)
-	except jwt.exceptions.DecodeError:
-		raise FoxlockError(BAD_REQUEST, 'Failed to decode JWT. Are you using the right key?')
+	except ValueError:
+		raise FoxlockError(BAD_REQUEST, 'Failed to decrypt message. Are you using the right key?')
 	except jwt.exceptions.InvalidTokenError:
 		raise FoxlockError(BAD_REQUEST, 'JWT is malformed')
 	return decoded_token_data

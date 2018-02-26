@@ -1,4 +1,5 @@
 from unittest import TestCase, main
+from Crypto.PublicKey import RSA
 
 import foxlock
 
@@ -73,7 +74,16 @@ def test_JWTWithoutKeyName(self):
 	self.assertEqual(resp_text, '"name" not provided in JWT payload')
 
 def test_clientMessageEncryptedWithWrongKey(self):
-	raise NotImplementedError()
+	global CLIENT_PRI_KEY
+	wrongKey = RSA.generate(2048).publickey().exportKey()
+
+	encoded_jwt = packJWT({}, CLIENT_PRI_KEY, wrongKey)
+	resp = makeRequest(self, self.url + 'testuser', encoded_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Failed to decrypt message. Are you using the right key?')
 
 def test_malformedJWT(self):
 	raise NotImplementedError()
