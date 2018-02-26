@@ -117,9 +117,6 @@ def test_JWTSignedWithWrongKey(self):
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
 
-def test_requestInvalidKey(self):
-	raise NotImplementedError()
-
 def test_JWTsAreOneTimeUse(self):
 	raise NotImplementedError()
 
@@ -192,7 +189,6 @@ bindTest(GetKey, test_JWTWithoutKeyName)
 bindTest(GetKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(GetKey, test_malformedJWT)
 bindTest(GetKey, test_JWTSignedWithWrongKey)
-bindTest(GetKey, test_requestInvalidKey)
 bindTest(GetKey, test_JWTsAreOneTimeUse)
 
 bindTest(GetKey, test_requestNonExistingKey)
@@ -212,7 +208,6 @@ bindTest(PostKey, test_JWTWithoutKeyName)
 bindTest(PostKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
-bindTest(PostKey, test_requestInvalidKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
 
 bindTest(PostKey, test_JWTWithoutKeyBody)
@@ -233,7 +228,6 @@ bindTest(PutKey, test_JWTWithoutKeyName)
 bindTest(PutKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PutKey, test_malformedJWT)
 bindTest(PutKey, test_JWTSignedWithWrongKey)
-bindTest(PutKey, test_requestInvalidKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
 
 bindTest(PutKey, test_JWTWithoutKeyBody)
@@ -254,7 +248,6 @@ bindTest(DeleteKey, test_JWTWithoutKeyName)
 bindTest(DeleteKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(DeleteKey, test_malformedJWT)
 bindTest(DeleteKey, test_JWTSignedWithWrongKey)
-bindTest(DeleteKey, test_requestInvalidKey)
 bindTest(DeleteKey, test_JWTsAreOneTimeUse)
 
 bindTest(DeleteKey, test_requestNonExistingKey)
