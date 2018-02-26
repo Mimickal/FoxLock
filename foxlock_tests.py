@@ -2,6 +2,7 @@ from unittest import TestCase, main
 from Crypto.PublicKey import RSA
 import jwt
 from base64 import b64encode, b64decode
+import os
 
 import foxlock
 import HybridRSA
@@ -148,15 +149,30 @@ def test_JWTWithoutKeyData(self):
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, '"data" not provided in JWT payload')
 
-def test_newKeyTooLarge(self):
-	raise NotImplementedError()
-
 
 
 # Tests for POST
 
 def test_keyAlreadyExists(self):
 	raise NotImplementedError()
+
+def test_newKeyTooLarge(self):
+	key_name = 'newkey'
+
+	# Make sure our test key doesn't exist from a previous run
+	try:
+		os.remove('keys/testuser/' + key_name)
+	except FileNotFoundError:
+		pass
+
+	keyTooLargeHelper(self, 'newkey')
+
+
+
+# Tests for PUT
+
+def test_updateKeyTooLarge(self):
+	keyTooLargeHelper(self, 'oldkey')
 
 
 
@@ -178,6 +194,18 @@ def unpackJWT(encoded):
 	decoded = b64decode(encoded)
 	dec_token = HybridRSA.decrypt(decoded, CLIENT_PRI_KEY)
 	return jwt.decode(dec_token, SERVER_JWT_KEY, algorithms=['RS256'])
+
+def keyTooLargeHelper(self, keyname):
+	'''This test is the same for PUT and POST, except for the key name'''
+	max_key_size = int(1e4)
+
+	big_key_jwt = packJWT({'name': keyname, 'data': 'x' * (max_key_size + 1)})
+	resp = makeRequest(self, self.url + 'testuser', big_key_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Key size limited to %s bytes' % max_key_size)
 
 
 
@@ -253,8 +281,8 @@ bindTest(PutKey, test_JWTSignedWithWrongKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
 
 bindTest(PutKey, test_requestNonExistingKey)
-bindTest(PutKey, test_newKeyTooLarge)
 bindTest(PutKey, test_JWTWithoutKeyData)
+bindTest(PutKey, test_updateKeyTooLarge)
 
 
 class DeleteKey(KeyTest):
