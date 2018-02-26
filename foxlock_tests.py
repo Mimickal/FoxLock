@@ -122,7 +122,7 @@ def test_JWTsAreOneTimeUse(self):
 
 
 
-# Tests for GET and DELETE
+# Tests for GET, PUT, and DELETE
 
 def test_requestNonExistingKey(self):
 	raise NotImplementedError()
@@ -135,6 +135,13 @@ def test_JWTWithoutKeyBody(self):
 	raise NotImplementedError()
 
 def test_newKeyTooLarge(self):
+	raise NotImplementedError()
+
+
+
+# Tests for POST
+
+def test_keyAlreadyExists(self):
 	raise NotImplementedError()
 
 
@@ -212,6 +219,7 @@ bindTest(PostKey, test_JWTsAreOneTimeUse)
 
 bindTest(PostKey, test_JWTWithoutKeyBody)
 bindTest(PostKey, test_newKeyTooLarge)
+bindTest(PostKey, test_keyAlreadyExists)
 
 
 class PutKey(KeyTest):
@@ -230,6 +238,7 @@ bindTest(PutKey, test_malformedJWT)
 bindTest(PutKey, test_JWTSignedWithWrongKey)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
 
+bindTest(PutKey, test_requestNonExistingKey)
 bindTest(PutKey, test_JWTWithoutKeyBody)
 bindTest(PutKey, test_newKeyTooLarge)
 
