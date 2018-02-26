@@ -100,10 +100,22 @@ def test_malformedJWT(self):
 
 	with self.subTest():
 		self.assertEqual(resp.status_code, 400)
-	self.assertEqual(resp_text, 'JWT is malformed')
+	self.assertEqual(resp_text, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
 
 def test_JWTSignedWithWrongKey(self):
-	raise NotImplementedError()
+	global SERVER_JWT_KEY
+	wrongKey = RSA.generate(2048).exportKey()
+
+	bad_signed_token = jwt.encode({}, wrongKey, algorithm='RS256')
+	enc_token = HybridRSA.encrypt(bad_signed_token, SERVER_JWT_KEY)
+	encoded_bad_signed_jwt = b64encode(enc_token).decode('utf-8')
+
+	resp = makeRequest(self, self.url + 'testuser', encoded_bad_signed_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
 
 def test_requestInvalidKey(self):
 	raise NotImplementedError()

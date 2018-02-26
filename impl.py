@@ -154,7 +154,8 @@ def decodeRequestToken(req, client_pub_key):
 	except ValueError:
 		raise FoxlockError(BAD_REQUEST, 'Failed to decrypt message. Are you using the right key?')
 	except jwt.exceptions.InvalidTokenError:
-		raise FoxlockError(BAD_REQUEST, 'JWT is malformed')
+		raise FoxlockError(BAD_REQUEST, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
+
 	return decoded_token_data
 
 def validateKeyName(token_data):
