@@ -127,35 +127,11 @@ def test_JWTsAreOneTimeUse(self):
 	raise NotImplementedError()
 
 
-# Tests for GET, PUT, and DELETE
-
-def test_requestNonExistingKey(self):
-	non_exist_key_name = 'idontexist'
-
-	enc_jwt = packJWT({'name': non_exist_key_name, 'data': 'blah'})
-	resp = makeRequest(self, self.url + 'testuser', enc_jwt)
-	resp_text = resp.get_data(as_text=True)
-
-	with self.subTest():
-		self.assertEqual(resp.status_code, 404)
-	self.assertEqual(resp_text, 'Key "%s" not found' % non_exist_key_name)
-
-
-# Tests for POST and PUT
-
-def test_JWTWithoutKeyData(self):
-	no_key_data_jwt = packJWT({'name': 'testkey'})
-	resp = makeRequest(self, self.url + 'testuser', no_key_data_jwt)
-	resp_text = resp.get_data(as_text=True)
-
-	with self.subTest():
-		self.assertEqual(resp.status_code, 400)
-	self.assertEqual(resp_text, '"data" not provided in JWT payload')
-
 # Tests for GET
 
 def test_happyPathGET(self):
 	raise NotImplementedError()
+
 
 # Tests for POST
 
@@ -184,6 +160,7 @@ def test_newKeyTooLarge(self):
 def test_happyPathPOST(self):
 	raise NotImplementedError()
 
+
 # Tests for PUT
 
 def test_updateKeyTooLarge(self):
@@ -192,10 +169,38 @@ def test_updateKeyTooLarge(self):
 def test_happyPathPUT(self):
 	raise NotImplementedError()
 
+
 # Tests for DELETE
 
 def test_happyPathDELETE(self):
 	raise NotImplementedError()
+
+
+# Tests for GET, PUT, and DELETE
+
+def test_requestNonExistingKey(self):
+	non_exist_key_name = 'idontexist'
+
+	enc_jwt = packJWT({'name': non_exist_key_name, 'data': 'blah'})
+	resp = makeRequest(self, self.url + 'testuser', enc_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 404)
+	self.assertEqual(resp_text, 'Key "%s" not found' % non_exist_key_name)
+
+
+# Tests for POST and PUT
+
+def test_JWTWithoutKeyData(self):
+	no_key_data_jwt = packJWT({'name': 'testkey'})
+	resp = makeRequest(self, self.url + 'testuser', no_key_data_jwt)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, '"data" not provided in JWT payload')
+
 
 
 # Helper functions
