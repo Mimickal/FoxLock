@@ -152,6 +152,10 @@ def test_JWTWithoutKeyData(self):
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, '"data" not provided in JWT payload')
 
+# Tests for GET
+
+def test_happyPathGET(self):
+	raise NotImplementedError()
 
 # Tests for POST
 
@@ -177,12 +181,21 @@ def test_newKeyTooLarge(self):
 
 	keyTooLargeHelper(self, 'newkey')
 
+def test_happyPathPOST(self):
+	raise NotImplementedError()
 
 # Tests for PUT
 
 def test_updateKeyTooLarge(self):
 	keyTooLargeHelper(self, 'oldkey')
 
+def test_happyPathPUT(self):
+	raise NotImplementedError()
+
+# Tests for DELETE
+
+def test_happyPathDELETE(self):
+	raise NotImplementedError()
 
 
 # Helper functions
@@ -250,6 +263,7 @@ bindTest(GetKey, test_JWTSignedWithWrongKey)
 bindTest(GetKey, test_JWTsAreOneTimeUse)
 
 bindTest(GetKey, test_requestNonExistingKey)
+bindTest(GetKey, test_happyPathGET)
 
 
 class PostKey(KeyTest):
@@ -271,6 +285,7 @@ bindTest(PostKey, test_JWTsAreOneTimeUse)
 bindTest(PostKey, test_JWTWithoutKeyData)
 bindTest(PostKey, test_newKeyTooLarge)
 bindTest(PostKey, test_keyAlreadyExists)
+bindTest(PostKey, test_happyPathPOST)
 
 
 class PutKey(KeyTest):
@@ -292,6 +307,7 @@ bindTest(PutKey, test_JWTsAreOneTimeUse)
 bindTest(PutKey, test_requestNonExistingKey)
 bindTest(PutKey, test_JWTWithoutKeyData)
 bindTest(PutKey, test_updateKeyTooLarge)
+bindTest(PutKey, test_happyPathPUT)
 
 
 class DeleteKey(KeyTest):
@@ -311,6 +327,7 @@ bindTest(DeleteKey, test_JWTSignedWithWrongKey)
 bindTest(DeleteKey, test_JWTsAreOneTimeUse)
 
 bindTest(DeleteKey, test_requestNonExistingKey)
+bindTest(DeleteKey, test_happyPathDELETE)
 
 
 if __name__ == '__main__':
