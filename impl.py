@@ -3,6 +3,7 @@ import jwt
 import re
 import os
 from base64 import b64encode, b64decode
+from subprocess import check_call, CalledProcessError
 
 import HybridRSA
 
@@ -103,9 +104,16 @@ def deleteKey(client):
 	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
 
+	# NOTE shred may not fully destroy the key file on certain filesystems.
+	# See `man shred` for details.
 	try:
-		os.remove('keys/%s/%s.key' % (client, key_name))
-	except FileNotFoundError:
+		with open('/dev/null') as dev_null:
+			check_call([
+				'/usr/bin/shred',
+				'--zero', '--remove',
+				'keys/%s/%s.key' % (client, key_name)
+			], stderr=dev_null)
+	except CalledProcessError:
 		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
 	return 'Key "%s" successfully deleted' % key_name
