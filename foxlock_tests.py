@@ -426,6 +426,20 @@ bindTest(DeleteKey, test_requestNonExistingKey)
 bindTest(DeleteKey, test_happyPathDELETE)
 
 
+class GenericError(TestCase):
+	'''Tests for internal server errors and non-existing endpoints'''
+	def setUp(self):
+		self.app = foxlock.app.test_client()
+
+	def test_generic404(self):
+		resp = self.app.get('/badendpoint')
+		resp_text = resp.get_data(as_text=True)
+
+		with self.subTest():
+			self.assertEqual(resp.status_code, 404)
+		self.assertEqual(resp_text, 'Bad endpoint')
+
+
 if __name__ == '__main__':
 	main() # From unittest
 

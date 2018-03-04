@@ -29,6 +29,14 @@ def jwtKeyRoute():
 def handle_error(error):
 	return error.message, error.code
 
+@app.errorhandler(404)
+def handle_404(error):
+	return 'Bad endpoint', 404
+
+@app.errorhandler(500)
+def handle_500(error):
+	return 'Internal server error', 500
+
 
 if __name__ == '__main__':
     context = ('resources/ssl_cert.pem', 'resources/ssl_privatekey.pem')
