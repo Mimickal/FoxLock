@@ -176,6 +176,17 @@ def test_happyPathPOST(self):
 	except FileNotFoundError:
 		pass
 
+	# Verify key doesn't exist
+	token = packJWT({'name': key_name})
+	resp = getattr(self.app, 'get')(self.url + 'testuser', data = token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 404)
+	with self.subTest():
+		self.assertEqual(resp_text, 'Key "%s" not found' % key_name)
+
+	# Add the key
 	token = packJWT({'name': key_name, 'data': 'new key data'})
 	resp = makeRequest(self, self.url + 'testuser', token)
 	resp_text = resp.get_data(as_text=True)
