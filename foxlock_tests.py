@@ -161,7 +161,7 @@ def test_newKeyTooLarge(self):
 
 	# Make sure our test key doesn't exist from a previous run
 	try:
-		os.remove('keys/testuser/' + key_name)
+		os.remove('keys/testuser/%s.key' % key_name)
 	except FileNotFoundError:
 		pass
 
