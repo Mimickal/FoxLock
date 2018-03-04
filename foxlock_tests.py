@@ -131,7 +131,16 @@ def test_JWTsAreOneTimeUse(self):
 # Tests for GET
 
 def test_happyPathGET(self):
-	raise NotImplementedError()
+	token = packJWT({'name': 'testkey'})
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 200)
+
+	data = unpackJWT(resp_text)
+
+	self.assertEqual(data, {'key': self.test_key_data})
 
 
 # Tests for POST
