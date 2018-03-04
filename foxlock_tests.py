@@ -168,7 +168,21 @@ def test_newKeyTooLarge(self):
 	keyTooLargeHelper(self, 'newkey')
 
 def test_happyPathPOST(self):
-	raise NotImplementedError()
+	key_name = 'newkey'
+
+	# Remove key from previous run if it exists
+	try:
+		os.remove('keys/testuser/%s.key' % key_name)
+	except FileNotFoundError:
+		pass
+
+	token = packJWT({'name': key_name, 'data': 'new key data'})
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 201)
+	self.assertEqual(resp_text, 'Key successfully created')
 
 
 # Tests for PUT
