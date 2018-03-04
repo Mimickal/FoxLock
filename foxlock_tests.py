@@ -156,6 +156,17 @@ def test_keyAlreadyExists(self):
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, 'Key "%s" already exists' % existing_key_name)
 
+def test_newKeyNameTooLong(self):
+	max_name_length = 50
+
+	token = packJWT({'name': 'x' * (max_name_length + 1), 'data': 'ABC'})
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'Key name limited to %s characters' % max_name_length)
+
 def test_newKeyTooLarge(self):
 	key_name = 'newkey'
 
@@ -367,6 +378,7 @@ bindTest(PostKey, test_JWTSignedWithWrongKey)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
 
 bindTest(PostKey, test_JWTWithoutKeyData)
+bindTest(PostKey, test_newKeyNameTooLong)
 bindTest(PostKey, test_newKeyTooLarge)
 bindTest(PostKey, test_keyAlreadyExists)
 bindTest(PostKey, test_happyPathPOST)

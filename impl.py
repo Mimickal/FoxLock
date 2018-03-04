@@ -24,6 +24,7 @@ BAD_REQUEST = 400
 NOT_FOUND = 404
 
 KEY_SIZE_LIMIT = int(1e4)
+KEY_NAME_LIMIT = 50
 
 def getKey(client):
 	'''Retrieves the specified key for the specified client
@@ -55,12 +56,18 @@ def addKey(client):
 	'''
 	global BAD_REQUEST
 	global CREATED
+	global KEY_NAME_LIMIT
 
 	validateClient(client)
 	client_pub_key = loadClientRSAKey(client)
 	token_data = decodeRequestToken(request, client_pub_key)
 	key_name = validateKeyName(token_data)
 	key_data = validateKeyData(token_data)
+
+	# Limit key length
+	if len(key_name) > KEY_NAME_LIMIT:
+		err_text = 'Key name limited to %s characters' % KEY_NAME_LIMIT
+		raise FoxlockError(BAD_REQUEST, err_text)
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
