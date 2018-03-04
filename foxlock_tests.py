@@ -3,6 +3,7 @@ from Crypto.PublicKey import RSA
 import jwt
 from base64 import b64encode, b64decode
 import os
+import errno
 
 import foxlock
 import HybridRSA
@@ -249,6 +250,18 @@ class KeyTest(TestCase):
 		self.app = foxlock.app.test_client()
 		self.url = '/key/'
 		self.user = 'testuser'
+		self.test_key_data = 'test key data'
+
+		# Make sure test directory exists
+		try:
+			os.mkdir('keys/' + self.user)
+		except OSError as e:
+			if e.errno != errno.EEXIST:
+				raise e
+
+		# Make sure test key exists
+		with open('keys/%s/testkey.key' % self.user, 'w') as key:
+			key.write(self.test_key_data)
 
 
 class GetKey(KeyTest):
