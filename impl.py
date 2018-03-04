@@ -117,7 +117,7 @@ def deleteKey(client):
 	except CalledProcessError:
 		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
-	return 'Key "%s" successfully deleted' % key_name
+	return 'Key successfully deleted'
 
 def getJwtKey():
 	'''Simply returns the RSA public key the server uses to sign JWTs'''
