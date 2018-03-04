@@ -39,7 +39,8 @@ def getKey(client):
 
 	# Keys may only have alpha-numeric names
 	try:
-		requested_key = loadKey('keys/%s/%s.key' % (client, key_name))
+		with open('keys/%s/%s.key' % (client, key_name)) as key_file:
+			requested_key = key_file.read()
 	except IOError:
 		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
 
