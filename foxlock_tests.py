@@ -202,7 +202,21 @@ def test_updateKeyTooLarge(self):
 	keyTooLargeHelper(self, 'oldkey')
 
 def test_happyPathPUT(self):
-	raise NotImplementedError()
+	key_name = 'oldkey'
+	key_data = 'Old key data'
+	new_key_data = 'Updated key data'
+
+	# Add "old" key if it doesn't exist
+	with open('keys/testuser/%s.key' % key_name, 'w') as old_key:
+		old_key.write(key_data)
+
+	token = packJWT({'name': key_name, 'data': new_key_data})
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 201)
+	self.assertEqual(resp_text, 'Key successfully updated')
 
 
 # Tests for DELETE
