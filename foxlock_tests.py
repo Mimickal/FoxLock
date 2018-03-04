@@ -222,7 +222,25 @@ def test_happyPathPUT(self):
 # Tests for DELETE
 
 def test_happyPathDELETE(self):
-	raise NotImplementedError()
+	key_name = 'deletekey'
+	key_data = 'This will be deleted'
+
+	# Create key to delete
+	with open('keys/testuser/%s.key' % key_name, 'w') as delete_key:
+		delete_key.write(key_name)
+
+	# Delete the key
+	token = packJWT({'name': key_name})
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 200)
+	with self.subTest():
+		self.assertEqual(resp_text, 'Key successfully deleted')
+
+	# Verify key was deleted
+	self.assertFalse(os.path.isfile('keys/testuser/%s.key' % key_name))
 
 
 # Tests for GET, PUT, and DELETE
