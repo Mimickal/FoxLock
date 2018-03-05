@@ -48,7 +48,7 @@ def getKey(client):
 
 	# Keys may only have alpha-numeric names
 	try:
-		with open('keys/%s/%s.key' % (client, key_name)) as key_file:
+		with open(os.path.join('keys', client, key_name + '.key')) as key_file:
 			requested_key = key_file.read()
 	except IOError:
 		raise FoxlockError(NOT_FOUND, 'Key "%s" not found' % key_name)
@@ -79,7 +79,7 @@ def addKey(client):
 
 	# Use 'x' flag so we can throw an error if a key with this name already exists
 	try:
-		with open('keys/%s/%s.key' % (client, key_name), 'x') as f:
+		with open(os.path.join('keys', client, key_name + '.key'), 'x') as f:
 			f.write(key_data)
 	except FileExistsError:
 		raise FoxlockError(BAD_REQUEST, 'Key "%s" already exists' % key_name)
@@ -100,7 +100,7 @@ def updateKey(client):
 	key_data = validateKeyData(token_data)
 
 	# Use 'w' flag to replace existing key file with the new key data
-	key_path = 'keys/%s/%s.key' % (client, key_name)
+	key_path = os.path.join('keys', client, key_name + '.key')
 	if os.path.isfile(key_path):
 		with open(key_path, 'w') as f:
 			f.write(key_data)
@@ -158,7 +158,7 @@ def loadClientRSAKey(client):
 	global NOT_FOUND
 
 	try:
-		key = loadKey('keys/%s/key_rsa.pub' % client)
+		key = loadKey(os.path.join('keys', client, 'key_rsa.pub'))
 	except IOError:
 		raise FoxlockError(NOT_FOUND, 'Client RSA public key not found')
 	return key
