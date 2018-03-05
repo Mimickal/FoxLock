@@ -175,7 +175,7 @@ def test_JWTsAreOneTimeUse(self):
 	resp_text = resp.get_data(as_text=True)
 
 	with self.subTest():
-		self.assertEqual(resp.status_code, 400)
+		self.assertEqual(resp.status_code, 403)
 	self.assertEqual(resp_text, 'JWTs may only be used once')
 
 def test_oldJWTsPruned(self):

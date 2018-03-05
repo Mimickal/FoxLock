@@ -22,6 +22,7 @@ SERVER_JWT_PUBLIC_KEY  = loadKey('resources/jwt_key.pub')
 # HTTP response codes
 CREATED = 201
 BAD_REQUEST = 400
+FORBIDDEN = 403
 NOT_FOUND = 404
 
 # Clint key limits
@@ -169,6 +170,7 @@ def decodeRequestToken(req, client_pub_key):
 	'''
 	global SERVER_JWT_PRIVATE_KEY
 	global BAD_REQUEST
+	global FORBIDDEN
 	global MAX_JWT_EXP_DELTA
 	global seen_tokens
 
@@ -202,7 +204,7 @@ def decodeRequestToken(req, client_pub_key):
 
 	# Reject tokens we have seen before
 	if seen_tokens.get(token_id) is not None:
-		raise FoxlockError(BAD_REQUEST, 'JWTs may only be used once')
+		raise FoxlockError(FORBIDDEN, 'JWTs may only be used once')
 
 	# Remember this token's ID
 	seen_tokens.update({token_id: token_exp})
