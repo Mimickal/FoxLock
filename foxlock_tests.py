@@ -4,8 +4,11 @@ import jwt
 from base64 import b64encode, b64decode
 import os
 import errno
+from time import time as now
+from uuid import uuid4
 
 import foxlock
+import impl
 import HybridRSA
 
 # FIXME Refactor this so tests have their own dedicated resources.
@@ -124,8 +127,75 @@ def test_JWTSignedWithWrongKey(self):
 		self.assertEqual(resp.status_code, 400)
 	self.assertEqual(resp_text, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
 
+def test_JWTMissingExp(self):
+	token =	packJWT({'key': 'abc'}, exp=None)
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, '"exp" required in JWT payload')
+
+def test_JWTMissingJti(self):
+	token =	packJWT({'key': 'abc'}, jti=None)
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, '"jti" required in JWT payload')
+
+def test_oldJWTsRejected(self):
+	bad_time = now() - 1
+	token = packJWT({'key': 'abc'}, exp=bad_time)
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'JWT already expired')
+
+def test_JWTExpTooLongRejected(self):
+	bad_time = now() + 61
+	token = packJWT({'key': 'abc'}, exp=bad_time)
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	# TODO use a constant instead of hardcoded value
+	self.assertEqual(resp_text, 'JWTs must expire within 60 seconds')
+
 def test_JWTsAreOneTimeUse(self):
-	raise NotImplementedError()
+	token = packJWT({'key': 'abc'})
+	resp = makeRequest(self, self.url + 'testuser', token)
+
+	# Make another request with the same token
+	resp = makeRequest(self, self.url + 'testuser', token)
+	resp_text = resp.get_data(as_text=True)
+
+	with self.subTest():
+		self.assertEqual(resp.status_code, 400)
+	self.assertEqual(resp_text, 'JWTs may only be used once')
+
+def test_oldJWTsPruned(self):
+	# Inject some old IDs into the database, make a request,
+	# then verify they've been removed
+	bad_id1 = uuid4().hex
+	bad_id2 = uuid4().hex
+
+	# TODO use the constant for delta here
+	impl.seen_tokens.update({
+		bad_id1: now() - 60,
+		bad_id2: now() - 61
+	})
+
+	token = packJWT({'key': 'abc'})
+	makeRequest(self, self.url + 'testuser', token)
+
+	with self.subTest():
+		self.assertFalse(bad_id1 in impl.seen_tokens)
+	self.assertFalse(bad_id2 in impl.seen_tokens)
 
 
 # Tests for GET
@@ -286,9 +356,21 @@ def test_JWTWithoutKeyData(self):
 def makeRequest(self, url, data=None):
 	return getattr(self.app, self.method)(url, data = data)
 
-def packJWT(data):
+def packJWT(data, jti='Default', exp='Default'):
 	global CLIENT_PRI_KEY
 	global SERVER_JWT_KEY
+
+	# Setting exp or jti to None removes the claim entirely
+	if jti == 'Default':
+		data.update({'jti': uuid4().hex})
+	elif jti is not None:
+		data.update({'jti': jti})
+
+	if exp == 'Default':
+		data.update({'exp': now() + 50})
+	elif exp is not None:
+		data.update({'exp': exp})
+
 	token = jwt.encode(data, CLIENT_PRI_KEY, algorithm='RS256')
 	enc_token = HybridRSA.encrypt(token, SERVER_JWT_KEY)
 	return b64encode(enc_token).decode('utf-8')
@@ -355,7 +437,12 @@ bindTest(GetKey, test_JWTWithoutKeyName)
 bindTest(GetKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(GetKey, test_malformedJWT)
 bindTest(GetKey, test_JWTSignedWithWrongKey)
+bindTest(GetKey, test_JWTMissingExp)
+bindTest(GetKey, test_JWTMissingJti)
+bindTest(GetKey, test_oldJWTsRejected)
+bindTest(GetKey, test_JWTExpTooLongRejected)
 bindTest(GetKey, test_JWTsAreOneTimeUse)
+bindTest(GetKey, test_oldJWTsPruned)
 
 bindTest(GetKey, test_requestNonExistingKey)
 bindTest(GetKey, test_happyPathGET)
@@ -375,7 +462,12 @@ bindTest(PostKey, test_JWTWithoutKeyName)
 bindTest(PostKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PostKey, test_malformedJWT)
 bindTest(PostKey, test_JWTSignedWithWrongKey)
+bindTest(PostKey, test_JWTMissingExp)
+bindTest(PostKey, test_JWTMissingJti)
+bindTest(PostKey, test_oldJWTsRejected)
+bindTest(PostKey, test_JWTExpTooLongRejected)
 bindTest(PostKey, test_JWTsAreOneTimeUse)
+bindTest(PostKey, test_oldJWTsPruned)
 
 bindTest(PostKey, test_JWTWithoutKeyData)
 bindTest(PostKey, test_newKeyNameTooLong)
@@ -398,7 +490,12 @@ bindTest(PutKey, test_JWTWithoutKeyName)
 bindTest(PutKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(PutKey, test_malformedJWT)
 bindTest(PutKey, test_JWTSignedWithWrongKey)
+bindTest(PutKey, test_JWTMissingExp)
+bindTest(PutKey, test_JWTMissingJti)
+bindTest(PutKey, test_oldJWTsRejected)
+bindTest(PutKey, test_JWTExpTooLongRejected)
 bindTest(PutKey, test_JWTsAreOneTimeUse)
+bindTest(PutKey, test_oldJWTsPruned)
 
 bindTest(PutKey, test_requestNonExistingKey)
 bindTest(PutKey, test_JWTWithoutKeyData)
@@ -420,7 +517,12 @@ bindTest(DeleteKey, test_JWTWithoutKeyName)
 bindTest(DeleteKey, test_clientMessageEncryptedWithWrongKey)
 bindTest(DeleteKey, test_malformedJWT)
 bindTest(DeleteKey, test_JWTSignedWithWrongKey)
+bindTest(DeleteKey, test_JWTMissingExp)
+bindTest(DeleteKey, test_JWTMissingJti)
+bindTest(DeleteKey, test_oldJWTsRejected)
+bindTest(DeleteKey, test_JWTExpTooLongRejected)
 bindTest(DeleteKey, test_JWTsAreOneTimeUse)
+bindTest(DeleteKey, test_oldJWTsPruned)
 
 bindTest(DeleteKey, test_requestNonExistingKey)
 bindTest(DeleteKey, test_happyPathDELETE)

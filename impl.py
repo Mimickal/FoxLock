@@ -4,6 +4,7 @@ import re
 import os
 from base64 import b64encode, b64decode
 from subprocess import check_call, CalledProcessError
+from time import time as now
 
 import HybridRSA
 
@@ -23,8 +24,14 @@ CREATED = 201
 BAD_REQUEST = 400
 NOT_FOUND = 404
 
+# Clint key limits
 KEY_SIZE_LIMIT = int(1e4)
 KEY_NAME_LIMIT = 50
+
+# A JWT must expire within this many seconds
+MAX_JWT_EXP_DELTA = 60
+
+seen_tokens = {}
 
 def getKey(client):
 	'''Retrieves the specified key for the specified client
@@ -156,9 +163,14 @@ def loadClientRSAKey(client):
 	return key
 
 def decodeRequestToken(req, client_pub_key):
-	'''Decrypts / decodes the request's JWT with the server's JWT private key'''
+	'''Decrypts / decodes the request's JWT with the server's JWT private key.
+	Also enforces one-time-use JWTs with short exp claims to help prevent
+	replay and cache flooding attacks, respectively.
+	'''
 	global SERVER_JWT_PRIVATE_KEY
 	global BAD_REQUEST
+	global MAX_JWT_EXP_DELTA
+	global seen_tokens
 
 	token = req.get_data(as_text=True)
 	if not token:
@@ -169,8 +181,36 @@ def decodeRequestToken(req, client_pub_key):
 		decoded_token_data = unpackJWT(token, client_pub_key, SERVER_JWT_PRIVATE_KEY)
 	except ValueError:
 		raise FoxlockError(BAD_REQUEST, 'Failed to decrypt message. Are you using the right key?')
+	except jwt.exceptions.ExpiredSignatureError:
+		raise FoxlockError(BAD_REQUEST, 'JWT already expired')
 	except jwt.exceptions.InvalidTokenError:
 		raise FoxlockError(BAD_REQUEST, 'Failed to decode JWT. Did you use the right key, or is the token malformed?')
+
+
+	# Make sure JWTs have required registered claims
+	token_exp = decoded_token_data.get('exp')
+	token_id = decoded_token_data.get('jti')
+
+	if token_exp is None:
+		raise FoxlockError(BAD_REQUEST, '"exp" required in JWT payload')
+	if token_id is None:
+		raise FoxlockError(BAD_REQUEST, '"jti" required in JWT payload')
+
+	# Only accept tokens that will expire soon
+	if token_exp - now() > MAX_JWT_EXP_DELTA:
+		raise FoxlockError(BAD_REQUEST, 'JWTs must expire within %s seconds' % MAX_JWT_EXP_DELTA)
+
+	# Reject tokens we have seen before
+	if seen_tokens.get(token_id) is not None:
+		raise FoxlockError(BAD_REQUEST, 'JWTs may only be used once')
+
+	# Remember this token's ID
+	seen_tokens.update({token_id: token_exp})
+
+	# Prune expired tokens
+	for jti, exp in list(seen_tokens.items()):
+		if exp < now():
+			del seen_tokens[jti]
 
 	return decoded_token_data
 
