@@ -6,7 +6,7 @@ app = Flask('foxlock');
 
 @app.route('/key/<client>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 def keyRoute(client):
-	"""This endpoint provides basic CRUD operations for client keys"""
+	'''This endpoint provides basic CRUD operations for client keys'''
 	if request.method == 'GET':
 		return impl.getKey(client)
 	if request.method == 'POST':
@@ -18,11 +18,11 @@ def keyRoute(client):
 
 	# Flask should automatically reject a request that doesn't match one of the above methods,
 	# but defensive coding says we should catch this case anyway.
-	raise impl.FoxlockError(405, "Unsupported method '%s'" % request.method)
+	raise impl.FoxlockError(405, 'Unsupported method "%s"' % request.method)
 
 @app.route('/jwtkey', methods=['GET'])
 def jwtKeyRoute():
-	"""This endpoint returns the public key of the RSA key-pair we use to sign our JWTs."""
+	'''This endpoint returns the public key of the RSA key-pair we use to sign our JWTs.'''
 	return impl.getJwtKey()
 
 @app.errorhandler(impl.FoxlockError)
