@@ -39,6 +39,13 @@ def handle_500(error):
 
 
 if __name__ == '__main__':
-    context = ('resources/ssl_cert.pem', 'resources/ssl_privatekey.pem')
-    app.run(ssl_context=context)
+	from argparse import ArgumentParser
+
+	parser = ArgumentParser(description='Secure light-weight key server')
+	parser.add_argument('--host', type=str, default='0.0.0.0')
+	parser.add_argument('--port', type=int, default=20145)
+	args = parser.parse_args()
+
+	context = ('resources/ssl_cert.pem', 'resources/ssl_privatekey.pem')
+	app.run(ssl_context=context, host=args.host, port=args.port)
 
